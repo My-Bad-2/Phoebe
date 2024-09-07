@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/My-Bad-2/libstdcxx
+revision = master
+depth = 1
+
+[provide]
+libstdcxx = libstdcxx_dep
