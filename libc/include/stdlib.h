@@ -40,6 +40,7 @@ unsigned long long int strtoull(const char* __restrict __nptr, char** __restrict
 int atoi(const char* __nptr) __PURE __NONNULL((1));
 long atol(const char* __nptr) __PURE __NONNULL((1));
 long atoll(const char* __nptr) __PURE __NONNULL((1));
+unsigned long atou(const char* __nptr) __PURE __NONNULL((1));
 
 int abs(int __x) __CONST;
 long int labs(long int __x) __CONST;

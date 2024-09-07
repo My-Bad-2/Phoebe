@@ -4,6 +4,7 @@ libc_sources = files(
     'ctype.c'
 )
 
+subdir('stdio')
 subdir('string')
 subdir('stdlib')
 

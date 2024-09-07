@@ -5,4 +5,5 @@ libc_sources += files(
     'strtoll.c',
     'strtoul.c',
     'strtoull.c',
+    'atou.c'
 )
