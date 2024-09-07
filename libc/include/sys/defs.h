@@ -39,6 +39,7 @@
 #define __ALIGNED(x) __attribute__((aligned(x)))
 #define __NO_RETURN __attribute__((__noreturn__))
 #define __WARN_UNUSED_RESULT __attribute__((__warn_unused_result__))
+#define __MAY_ALIAS __attribute__((__may_alias__))
 
 #if defined(__clang__)
 	#define __UNINITIALIZED __attribute__((uninitialized))
