@@ -9,6 +9,8 @@
 #define BUFSIZE 8192
 #define EOI (-1)
 
+__CDECLS_BEGIN
+
 extern FILE* stdin;
 extern FILE* stdout;
 extern FILE* stderr;
@@ -31,5 +33,7 @@ int putc(int __c, FILE* __stream) __NONNULL((2));
 
 int fputs(const char* __restrict __s, FILE* __restrict __stream) __NONNULL((2));
 int puts(const char* __s);
+
+__CDECLS_END
 
 #endif // _STDIO_H

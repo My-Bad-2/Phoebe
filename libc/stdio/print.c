@@ -1,8 +1,8 @@
-#include "string.h"
+#include <string.h>
 #include <ctype.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 #define FLAG_ZERO_PAD (1 << 0)
 #define FLAG_LEFT (1 << 1)
@@ -613,5 +613,5 @@ int vsnprintf_internal(FILE* s, const char* format, va_list args)
 	format_string(s, format, args);
 	append_termination_internal(s);
 
-	return s->position;
+	return SYSTEM_OK;
 }

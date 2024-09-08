@@ -1,4 +1,6 @@
-kernel_include = [include_directories('include')]
+kernel_include = [
+    include_directories('include')
+]
 
 if get_option('kernel_arch') == 'amd64'
     kernel_include += include_directories('include/arch/amd64')
@@ -7,6 +9,9 @@ endif
 kernel_sources = files(
     'main.cpp',
 )
+
+subdir('drivers')
+subdir('arch' / get_option('kernel_arch'))
 
 clangtidy_files += kernel_sources
 

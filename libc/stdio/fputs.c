@@ -1,19 +1,20 @@
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
-int fputs(const char* restrict s, FILE* restrict stream)
+int fputs(const char* __restrict s, FILE* __restrict stream)
 {
 	size_t length = strlen(s);
 
 	for(size_t i = 0; i < length; i++)
 	{
-		if(!(putc(s[i], stream)))
+		if(putc(s[i], stream) != SYSTEM_OK)
 		{
-			return -1;
+			return SYSTEM_ERR_INTERNAL;
 		}
 	}
 
-	return length;
+	return SYSTEM_OK;
 }
 
 int puts(const char* s)
