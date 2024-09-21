@@ -1,14 +1,13 @@
-#include <stdint.h>
+// From: https://github.com/eyalroz/printf with some code modified to fit with the libc
+
 #include <string.h>
 #include <ctype.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <limits.h>
 
 #define INTEGER_BUFFER_SIZE 32
 #define MAX_POSSIBLE_BUFFER_SIZE INT_MAX
-#define STDIO_CONCATENATE(s1, s2) __STRINGIFY(s1, s2)
 
 #define FLAGS_ZEROPAD (1U << 0U)
 #define FLAGS_LEFT (1U << 1U)
@@ -43,7 +42,6 @@ typedef unsigned int stdio_flags_t;
 
 typedef uint8_t stdio_base_t;
 
-#define SIGN(neg, x) ((neg) ? -(x) : (x))
 #define STDIO_ABS(x) ((unsigned long)((x) > 0 ? (x) : -((unsigned long)x)))
 
 // Internal ASCII string to size_t conversion

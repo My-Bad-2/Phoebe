@@ -8,6 +8,7 @@ endif
 
 kernel_sources = files(
     'main.cpp',
+    'logger.cpp'
 )
 
 subdir('drivers')
