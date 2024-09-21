@@ -7,7 +7,7 @@ __CDECLS_BEGIN
 __NO_RETURN void kernel_main()
 {
 	drivers::initialize();
-    printf("Hello, World!\n");
+	printf("Hello, World!\n");
 
 	arch::halt(true);
 }

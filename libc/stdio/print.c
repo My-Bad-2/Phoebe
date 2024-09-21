@@ -1,206 +1,227 @@
+#include <stdint.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 
-#define FLAG_ZERO_PAD (1 << 0)
-#define FLAG_LEFT (1 << 1)
-#define FLAG_PLUS (1 << 2)
-#define FLAG_SPACE (1 << 6)
-#define FLAG_HASH (1 << 4)
-#define FLAG_UPPERCASE (1 << 5)
-#define FLAG_CHAR (1 << 6)
-#define FLAG_SHORT (1 << 7)
-#define FLAG_INT (1 << 8)
-#define FLAG_LONG (1 << 9)
-#define FLAG_LONG_LONG (1 << 10)
-#define FLAG_PRECISION (1 << 11)
-#define FLAG_ADAPT_EXP (1 << 12)
-#define FLAG_POINTER (1 << 13)
-#define FLAG_SIGNED (1 << 14)
+#define INTEGER_BUFFER_SIZE 32
+#define MAX_POSSIBLE_BUFFER_SIZE INT_MAX
+#define STDIO_CONCATENATE(s1, s2) __STRINGIFY(s1, s2)
+
+#define FLAGS_ZEROPAD (1U << 0U)
+#define FLAGS_LEFT (1U << 1U)
+#define FLAGS_PLUS (1U << 2U)
+#define FLAGS_SPACE (1U << 3U)
+#define FLAGS_HASH (1U << 4U)
+#define FLAGS_UPPERCASE (1U << 5U)
+#define FLAGS_CHAR (1U << 6U)
+#define FLAGS_SHORT (1U << 7U)
+#define FLAGS_INT (1U << 8U)
+
+#define FLAGS_LONG (1U << 9U)
+#define FLAGS_LONG_LONG (1U << 10U)
+#define FLAGS_PRECISION (1U << 11U)
+#define FLAGS_ADAPT_EXP (1U << 12U)
+#define FLAGS_POINTER (1U << 13U)
+
+#define FLAGS_SIGNED (1U << 14U)
+#define FLAGS_LONG_DOUBLE (1U << 15U)
+
+#define FLAGS_INT8 FLAGS_CHAR
+#define FLAGS_INT16 FLAGS_SHORT
+#define FLAGS_INT32 FLAGS_INT
+#define FLAGS_INT64 FLAGS_LONG
+
+typedef unsigned int stdio_flags_t;
 
 #define BASE_BINARY 2
 #define BASE_OCTAL 8
 #define BASE_DECIMAL 10
 #define BASE_HEX 16
 
-#define INT_BUFSIZE 32
+typedef uint8_t stdio_base_t;
 
-static inline void append_termination_internal(FILE* stream)
+#define SIGN(neg, x) ((neg) ? -(x) : (x))
+#define STDIO_ABS(x) ((unsigned long)((x) > 0 ? (x) : -((unsigned long)x)))
+
+// Internal ASCII string to size_t conversion
+static inline size_t stdio_atou(const char** str)
 {
-	if((stream->write_func != NULL) || (stream->buffer_size == 0))
+	size_t val = 0U;
+
+	while(isdigit(**str))
+	{
+		val = val * 10U + (size_t)(*((*str)++) - '0');
+	}
+
+	return val;
+}
+
+static inline void append_termination(FILE* fp)
+{
+	if((fp->write_func != NULL) || (fp->buffer_size == 0))
 	{
 		return;
 	}
 
-	if(stream->buffer == NULL)
+	if(fp->buffer == NULL)
 	{
 		return;
 	}
 
-	const size_t null_pos =
-		(stream->position < stream->buffer_size) ? stream->position : stream->buffer_size - 1;
-	stream->buffer[null_pos] = '\0';
+	size_t null_pos = (fp->position < fp->buffer_size) ? fp->position : fp->buffer_size - 1;
+	fp->buffer[null_pos] = '\0';
 }
 
-uint32_t parse_flags_internal(const char* format)
+static error_t output_reverse(FILE* fp, const char* buffer, size_t len, size_t width,
+							  stdio_flags_t flags)
 {
-	uint32_t flags = 0;
+	const size_t start_pos = fp->position;
 
-	while(true)
+	// pad spaces up to giver width
+	if(!(flags & FLAGS_LEFT) && !(flags & FLAGS_ZEROPAD))
 	{
-		switch(*format)
+		for(size_t i = len; i < width; i++)
 		{
-			case '0':
-				flags |= FLAG_ZERO_PAD;
-				format++;
-				break;
-			case '-':
-				flags |= FLAG_LEFT;
-				format++;
-				break;
-			case '+':
-				flags |= FLAG_PLUS;
-				format++;
-				break;
-			case ' ':
-				flags |= FLAG_SPACE;
-				format++;
-				break;
-			case '#':
-				flags |= FLAG_HASH;
-				format++;
-				break;
-			default:
-				return flags;
+			putc(' ', fp);
 		}
 	}
+
+	// reverse string
+	while(len)
+	{
+		putc(buffer[--len], fp);
+	}
+
+	// append pad spaces up to given width
+	if(flags & FLAGS_LEFT)
+	{
+		while((fp->position - start_pos) < width)
+		{
+			putc(' ', fp);
+		}
+	}
+
+	return SYSTEM_OK;
 }
 
-void reverse_output(FILE* stream, const char* string, size_t length, size_t width, uint32_t flags)
+static error_t finalize_integer(FILE* fp, char* buffer, size_t len, bool negative,
+								stdio_base_t base, size_t precision, size_t width,
+								stdio_flags_t flags)
 {
-	const size_t start_pos = stream->position;
+	size_t unpadded_len = len;
 
-	if(!(flags & FLAG_LEFT) && !(flags & FLAG_ZERO_PAD))
+	// pad with leading zeros
 	{
-		for(size_t i = length; i < width; i++)
+		if(!(flags & FLAGS_LEFT))
 		{
-			putc(' ', stream);
-		}
-	}
+			if(width && (flags & FLAGS_ZEROPAD) &&
+			   (negative || (flags & (FLAGS_PLUS | FLAGS_SPACE))))
+			{
+				width--;
+			}
 
-	while(length)
-	{
-		putc(string[--length], stream);
-	}
-
-	if(flags & FLAG_LEFT)
-	{
-		while((stream->position - start_pos) < width)
-		{
-			putc(' ', stream);
-		}
-	}
-}
-
-void print_integer(FILE* stream, char* buffer, size_t len, bool negative, uint8_t base,
-				   size_t precision, size_t width, uint32_t flags)
-{
-	size_t unpadded_length = len;
-
-	if(!(flags & FLAG_LEFT))
-	{
-		if(width && (flags & FLAG_ZERO_PAD) && (negative || (flags & (FLAG_PLUS | FLAG_SPACE))))
-		{
-			width--;
+			while((flags & FLAGS_ZEROPAD) && (len < width) && (len < INTEGER_BUFFER_SIZE))
+			{
+				buffer[len++] = '0';
+			}
 		}
 
-		while((flags & FLAG_ZERO_PAD) && (len < width) && (len < INT_BUFSIZE))
+		while((len < precision) && (len < INTEGER_BUFFER_SIZE))
 		{
 			buffer[len++] = '0';
 		}
-	}
 
-	while((len < precision) && (len < INT_BUFSIZE))
-	{
-		buffer[len++] = '0';
-	}
-
-	if((base == BASE_OCTAL) && (len > unpadded_length))
-	{
-		flags &= ~FLAG_HASH;
-	}
-
-	if(flags & (FLAG_HASH | FLAG_POINTER))
-	{
-		if(!(flags & FLAG_PRECISION) && len && ((len == precision) || (len == width)))
+		if((base == BASE_OCTAL) && (len > unpadded_len))
 		{
-			if(unpadded_length < len)
+			// Since we've written some zeros, we've satisfied
+			// the alternative format leading space requirement
+			flags &= ~FLAGS_HASH;
+		}
+	}
+
+	// Handle alternative format (hash)
+	if(flags & (FLAGS_HASH | FLAGS_POINTER))
+	{
+		if(!(flags & FLAGS_PRECISION) && len && ((len == precision) || (len == width)))
+		{
+			// Take back some padding digits to fit in what will be the format-specific prefix
+			if(unpadded_len < len)
 			{
+				// this should suffice for BASE_OCTAL
 				len--;
 			}
 
-			if(len && ((base == BASE_HEX) || (base == BASE_BINARY)) && (unpadded_length < len))
+			if(len && (base == BASE_HEX || base == BASE_BINARY) && (unpadded_len < len))
 			{
+				// and an extra for 0x or 0b
 				len--;
 			}
 		}
 
-		if((base == BASE_HEX) && !(flags & FLAG_UPPERCASE) && (len < INT_BUFSIZE))
+		if((base == BASE_HEX) && !(flags & FLAGS_UPPERCASE) && (len < INTEGER_BUFFER_SIZE))
 		{
 			buffer[len++] = 'x';
 		}
-		else if((base == BASE_HEX) && (flags & FLAG_UPPERCASE) && (len < INT_BUFSIZE))
+		else if((base == BASE_HEX) && (flags & FLAGS_UPPERCASE) && (len < INTEGER_BUFFER_SIZE))
 		{
 			buffer[len++] = 'X';
 		}
-		else if((base == BASE_BINARY) && (len < INT_BUFSIZE))
+		else if((base == BASE_BINARY) && (len < INTEGER_BUFFER_SIZE))
 		{
 			buffer[len++] = 'b';
 		}
 
-		if(len < INT_BUFSIZE)
+		if(len < INTEGER_BUFFER_SIZE)
 		{
 			buffer[len++] = '0';
 		}
 	}
 
-	if(len < INT_BUFSIZE)
+	if(len < INTEGER_BUFFER_SIZE)
 	{
 		if(negative)
 		{
 			buffer[len++] = '-';
 		}
-		else if(flags & FLAG_PLUS)
+		else if(flags & FLAGS_PLUS)
 		{
+			// Ignore the space if the `+` exists
 			buffer[len++] = '+';
 		}
-		else if(flags & FLAG_SPACE)
+		else if(flags & FLAGS_SPACE)
 		{
 			buffer[len++] = ' ';
 		}
 	}
 
-	reverse_output(stream, buffer, len, width, flags);
+	return output_reverse(fp, buffer, len, width, flags);
 }
 
-void print_int(FILE* stream, size_t value, bool negative, uint8_t base, size_t precision,
-			   size_t width, uint32_t flags)
+static error_t print_integer(FILE* fp, unsigned long value, bool negative, stdio_base_t base,
+							 size_t precision, size_t width, stdio_flags_t flags)
 {
-	char buffer[INT_BUFSIZE] = {};
+	char buffer[INTEGER_BUFFER_SIZE];
 	size_t len = 0;
 
 	if(!value)
 	{
-		if(!(flags & FLAG_PRECISION))
+		if(!(flags & FLAGS_PRECISION))
 		{
 			buffer[len++] = '0';
-			flags &= ~FLAG_HASH;
+
+			// Drop this flag since either the alternative and regular modes
+			// of the specifier don't differ on 0 values, or we've already provided
+			// the special handling for this mode.
+			flags &= ~FLAGS_HASH;
 		}
 		else if(base == BASE_HEX)
 		{
-			flags &= ~FLAG_HASH;
+			// Drop this flags since both alternative and regular modes of the specifier
+			// don't differ on 0 values
+			flags &= ~FLAGS_HASH;
 		}
 	}
 	else
@@ -209,68 +230,115 @@ void print_int(FILE* stream, size_t value, bool negative, uint8_t base, size_t p
 		{
 			const char digit = (char)(value % base);
 
-			buffer[len++] =
-				(char)((digit < 10) ? '0' + digit :
-									  (flags & FLAG_UPPERCASE ? 'A' : 'a') + digit - 10);
+			if(digit < 10)
+			{
+				buffer[len++] = (char)('0' + digit);
+			}
+			else
+			{
+				buffer[len++] = (char)((flags & FLAGS_UPPERCASE ? 'A' : 'a') + digit - 10);
+			}
+
 			value /= base;
-		} while(value && (len < INT_BUFSIZE));
+		} while(value && (len < INTEGER_BUFFER_SIZE));
 	}
 
-	print_integer(stream, buffer, len, negative, base, precision, width, flags);
+	return finalize_integer(fp, buffer, len, negative, base, precision, width, flags);
 }
 
-void format_string(FILE* stream, const char* format, va_list args)
+// Advances the format pointer past the flags, and returns the parsed flags
+// due to the characters passed
+static stdio_flags_t parse_flags(const char** format)
 {
-#define ADVANCE_IN_FORMAT_STRING(ptr) \
-	do                                \
-	{                                 \
-		(ptr)++;                      \
-		if(!*(ptr))                   \
-		{                             \
-			return;                   \
-		}                             \
+	stdio_flags_t flags = 0U;
+
+	do
+	{
+		switch(**format)
+		{
+			case '0':
+				flags |= FLAGS_ZEROPAD;
+				(*format)++;
+				break;
+			case '-':
+				flags |= FLAGS_LEFT;
+				(*format)++;
+				break;
+			case '+':
+				flags |= FLAGS_PLUS;
+				(*format)++;
+				break;
+			case ' ':
+				flags |= FLAGS_SPACE;
+				(*format)++;
+				break;
+			case '#':
+				flags |= FLAGS_HASH;
+				(*format)++;
+				break;
+			default:
+				return flags;
+		}
+	} while(true);
+}
+
+static inline error_t format_string(FILE* fp, const char* format, va_list args)
+{
+#define ADVANCE_IN_FORMAT_STRING(ptr)   \
+	do                                  \
+	{                                   \
+		(ptr)++;                        \
+		if(!*(ptr))                     \
+		{                               \
+			return SYSTEM_ERR_CANCELED; \
+		}                               \
 	} while(0)
 
 	while(*format)
 	{
 		if(*format != '%')
 		{
-			putc(*format, stream);
+			// A regular content character
+			putc(*format, fp);
 			format++;
 			continue;
 		}
 
+		// We're parsing a format specifier: %[flags][width][.precision][length]
 		ADVANCE_IN_FORMAT_STRING(format);
 
-		uint32_t flags = parse_flags_internal(format);
-		size_t width = 0;
+		stdio_flags_t flags = parse_flags(&format);
+
+		// Evalue width field
+		size_t width = 0U;
 
 		if(isdigit(*format))
 		{
-			width = (size_t)atou(format);
+			width = (size_t)stdio_atou(&format);
 		}
 		else if(*format == '*')
 		{
-			const int val = va_arg(args, int);
+			const int wide = va_arg(args, int);
 
-			if(val < 0)
+			if(wide < 0)
 			{
-				flags |= FLAG_LEFT;
-				width = (size_t)(-val);
+				flags |= FLAGS_LEFT; // reverse padding
+				width = (size_t)-wide;
 			}
 			else
 			{
-				width = (size_t)val;
+				width = (size_t)wide;
 			}
 
 			ADVANCE_IN_FORMAT_STRING(format);
 		}
 
-		size_t precision = 0;
+		// evaluate precision field
+		size_t precision = 0U;
 
 		if(*format == '.')
 		{
-			flags |= FLAG_PRECISION;
+			flags |= FLAGS_PRECISION;
 			ADVANCE_IN_FORMAT_STRING(format);
 
 			if(*format == '-')
@@ -280,23 +348,23 @@ void format_string(FILE* stream, const char* format, va_list args)
 					ADVANCE_IN_FORMAT_STRING(format);
 				} while(isdigit(*format));
 
-				flags &= ~FLAG_PRECISION;
+				flags &= ~FLAGS_PRECISION;
 			}
 			else if(isdigit(*format))
 			{
-				precision = atou(format);
+				precision = stdio_atou(&format);
 			}
 			else if(*format == '*')
 			{
-				const int precise = va_arg(args, int);
+				const int precision_ = va_arg(args, int);
 
-				if(precise < 0)
+				if(precision_ < 0)
 				{
-					flags &= ~FLAG_PRECISION;
+					flags &= ~FLAGS_PRECISION;
 				}
 				else
 				{
-					precision = (precise > 0) ? (size_t)precise : 0;
+					precision = precision_ > 0 ? (size_t)precision_ : 0U;
 				}
 
 				ADVANCE_IN_FORMAT_STRING(format);
@@ -305,14 +373,60 @@ void format_string(FILE* stream, const char* format, va_list args)
 
 		switch(*format)
 		{
+			case 'I':
+			{
+				ADVANCE_IN_FORMAT_STRING(format);
+				// Greedily parse for size in bits: 8, 16, 32 or 64
+				switch(*format)
+				{
+					case '8':
+						flags |= FLAGS_INT8;
+						ADVANCE_IN_FORMAT_STRING(format);
+
+						break;
+					case '1':
+						ADVANCE_IN_FORMAT_STRING(format);
+
+						if(*format == '6')
+						{
+							format++;
+							flags |= FLAGS_INT16;
+						}
+
+						break;
+					case '3':
+						ADVANCE_IN_FORMAT_STRING(format);
+
+						if(*format == '2')
+						{
+							ADVANCE_IN_FORMAT_STRING(format);
+							flags |= FLAGS_INT32;
+						}
+
+						break;
+					case '6':
+						ADVANCE_IN_FORMAT_STRING(format);
+
+						if(*format == '4')
+						{
+							ADVANCE_IN_FORMAT_STRING(format);
+							flags |= FLAGS_INT64;
+						}
+
+						break;
+					default:
+						break;
+				}
+				break;
+			}
 			case 'l':
 			{
-				flags |= FLAG_LONG;
+				flags |= FLAGS_LONG;
 				ADVANCE_IN_FORMAT_STRING(format);
 
 				if(*format == 'l')
 				{
-					flags |= FLAG_LONG_LONG;
+					flags |= FLAGS_LONG_LONG;
 					ADVANCE_IN_FORMAT_STRING(format);
 				}
 
@@ -320,12 +434,12 @@ void format_string(FILE* stream, const char* format, va_list args)
 			}
 			case 'h':
 			{
-				flags |= FLAG_SHORT;
+				flags |= FLAGS_SHORT;
 				ADVANCE_IN_FORMAT_STRING(format);
 
 				if(*format == 'h')
 				{
-					flags |= FLAG_CHAR;
+					flags |= FLAGS_CHAR;
 					ADVANCE_IN_FORMAT_STRING(format);
 				}
 
@@ -333,51 +447,23 @@ void format_string(FILE* stream, const char* format, va_list args)
 			}
 			case 't':
 			{
-				if(sizeof(ptrdiff_t) <= sizeof(int))
-				{
-					flags = FLAG_INT;
-				}
-				else if(sizeof(ptrdiff_t) == sizeof(long))
-				{
-					flags = FLAG_LONG;
-				}
-				else
-				{
-					flags = FLAG_LONG_LONG;
-				}
-
+				flags |= (sizeof(ptrdiff_t) <= sizeof(int))	 ? FLAGS_INT :
+						 (sizeof(ptrdiff_t) == sizeof(long)) ? FLAGS_LONG :
+															   FLAGS_LONG_LONG;
 				ADVANCE_IN_FORMAT_STRING(format);
 				break;
 			}
 			case 'j':
 			{
-				if(sizeof(intmax_t) == sizeof(long))
-				{
-					flags |= FLAG_LONG;
-				}
-				else
-				{
-					flags |= FLAG_LONG_LONG;
-				}
-
+				flags |= (sizeof(intmax_t) == sizeof(long) ? FLAGS_LONG : FLAGS_LONG_LONG);
 				ADVANCE_IN_FORMAT_STRING(format);
 				break;
 			}
 			case 'z':
 			{
-				if(sizeof(size_t) <= sizeof(int))
-				{
-					flags = FLAG_INT;
-				}
-				else if(sizeof(size_t) == sizeof(long))
-				{
-					flags = FLAG_LONG;
-				}
-				else
-				{
-					flags = FLAG_LONG_LONG;
-				}
-
+				flags |= (sizeof(size_t) <= sizeof(int))  ? FLAGS_INT :
+						 (sizeof(size_t) == sizeof(long)) ? FLAGS_LONG :
+															FLAGS_LONG_LONG;
 				ADVANCE_IN_FORMAT_STRING(format);
 				break;
 			}
@@ -385,6 +471,7 @@ void format_string(FILE* stream, const char* format, va_list args)
 				break;
 		}
 
+		// evaluate specifier
 		switch(*format)
 		{
 			case 'd':
@@ -397,10 +484,11 @@ void format_string(FILE* stream, const char* format, va_list args)
 			{
 				if(*format == 'd' || *format == 'i')
 				{
-					flags |= FLAG_SIGNED;
+					flags |= FLAGS_SIGNED;
 				}
 
-				uint8_t base;
+				stdio_base_t base = 0;
+
 				if(*format == 'x' || *format == 'X')
 				{
 					base = BASE_HEX;
@@ -416,111 +504,103 @@ void format_string(FILE* stream, const char* format, va_list args)
 				else
 				{
 					base = BASE_DECIMAL;
-					flags &= ~FLAG_HASH;
+
+					// decimal integers have no alternative presentation
+					flags &= ~FLAGS_HASH;
 				}
 
 				if(*format == 'X')
 				{
-					flags |= FLAG_UPPERCASE;
+					flags |= FLAGS_UPPERCASE;
 				}
 
 				format++;
-				if(flags & FLAG_PRECISION)
+
+				// ignore '0' flag when precision is given
+				if(flags & FLAGS_PRECISION)
 				{
-					flags &= ~FLAG_ZERO_PAD;
+					flags &= ~FLAGS_ZEROPAD;
 				}
 
-				if(flags & FLAG_SIGNED)
+				if(flags & FLAGS_SIGNED)
 				{
-					if(flags & FLAG_LONG_LONG)
+					// A signed specifier: d, i or possibly I + bit size if enabled
+					if(flags & FLAGS_LONG_LONG)
 					{
 						const long long value = va_arg(args, long long);
-						print_int(stream, llabs(value), value < 0, base, precision, width, flags);
+						print_integer(fp, STDIO_ABS(value), value < 0, base, precision, width,
+									  flags);
 					}
-					else if(flags & FLAG_LONG)
+					else if(flags & FLAGS_LONG)
 					{
 						const long value = va_arg(args, long);
-						print_int(stream, llabs(value), value < 0, base, precision, width, flags);
+						print_integer(fp, STDIO_ABS(value), value < 0, base, precision, width,
+									  flags);
 					}
 					else
 					{
-						int value = 0;
+						// Never try to interpret the argument as something potentially-smaller than
+						// int, due to integer promotion rules: Even if the user passed a short int,
+						// short unsigned etc. - these will come in after promotion, as int's (or
+						// unsigned for the case of short unsigned when it has the same size as int)
+						const int value = (flags & FLAGS_CHAR)	? (signed char)va_arg(args, int) :
+										  (flags & FLAGS_SHORT) ? (short int)va_arg(args, int) :
+																  va_arg(args, int);
 
-						if(flags & FLAG_CHAR)
-						{
-							value = (signed char)va_arg(args, int);
-						}
-						else if(flags & FLAG_CHAR)
-						{
-							value = (signed char)va_arg(args, int);
-						}
-						else if(flags & FLAG_SHORT)
-						{
-							value = (short int)va_arg(args, int);
-						}
-						else
-						{
-							value = va_arg(args, int);
-						}
-
-						print_int(stream, llabs(value), value < 0, base, precision, width, flags);
+						print_integer(fp, STDIO_ABS(value), value < 0, base, precision, width,
+									  flags);
 					}
 				}
 				else
 				{
-					flags &= ~(FLAG_PLUS | FLAG_SPACE);
+					// An unsigned specifier: u, x, X, o, b
+					flags &= ~(FLAGS_PLUS | FLAGS_SPACE);
 
-					if(flags & FLAG_LONG_LONG)
+					if(flags & FLAGS_LONG_LONG)
 					{
-						print_int(stream, va_arg(args, unsigned long long), false, base, precision,
-								  width, flags);
+						print_integer(fp, (unsigned long)va_arg(args, unsigned long long), false,
+									  base, precision, width, flags);
 					}
-					else if(flags & FLAG_LONG)
+					else if(flags & FLAGS_LONG)
 					{
-						print_int(stream, va_arg(args, unsigned long), false, base, precision,
-								  width, flags);
+						print_integer(fp, (unsigned long)va_arg(args, unsigned long), false, base,
+									  precision, width, flags);
 					}
 					else
 					{
-						unsigned int value = 0;
+						const unsigned int value =
+							(flags & FLAGS_CHAR)  ? (unsigned char)va_arg(args, unsigned int) :
+							(flags & FLAGS_SHORT) ? (unsigned short int)va_arg(args, unsigned int) :
+													va_arg(args, int);
 
-						if(flags & FLAG_CHAR)
-						{
-							value = (unsigned char)va_arg(args, unsigned int);
-						}
-						else if(flags & FLAG_SHORT)
-						{
-							value = (unsigned short int)va_arg(args, unsigned int);
-						}
-						else
-						{
-							value = va_arg(args, unsigned int);
-						}
-
-						print_int(stream, value, false, base, precision, width, flags);
+						print_integer(fp, STDIO_ABS(value), false, base, precision, width, flags);
 					}
 				}
 				break;
 			}
+
 			case 'c':
 			{
-				size_t l = 1U;
+				size_t len = 1U;
 
-				if(!(flags & FLAG_LEFT))
+				// pre-padding
+				if(!(flags & FLAGS_LEFT))
 				{
-					while(l++ < width)
+					while(len++ < width)
 					{
-						putc(' ', stream);
+						putc(' ', fp);
 					}
 				}
 
-				putc((char)va_arg(args, int), stream);
+				// char output
+				putc((char)va_arg(args, int), fp);
 
-				if(flags & FLAG_LEFT)
+				// post padding
+				if(flags & FLAGS_LEFT)
 				{
-					while(l++ < width)
+					while(len++ < width)
 					{
-						putc(' ', stream);
+						putc(' ', fp);
 					}
 				}
 
@@ -530,61 +610,64 @@ void format_string(FILE* stream, const char* format, va_list args)
 
 			case 's':
 			{
-				const char* p = va_arg(args, char*);
+				const char* str = va_arg(args, char*);
 
-				if(p == NULL)
+				if(str == NULL)
 				{
-					reverse_output(stream, ")llun(", 6, width, flags);
+					output_reverse(fp, ")llun(", 0, width, flags);
 				}
 				else
 				{
-					size_t l = strnlen(p, precision ? precision : BUFSIZE);
+					size_t len = strnlen(str, precision ? precision : MAX_POSSIBLE_BUFFER_SIZE);
 
-					if(flags & FLAG_PRECISION)
+					// pre-padding
+					if(flags & FLAGS_PRECISION)
 					{
-						l = (l < precision ? l : precision);
+						len = (len < precision) ? len : precision;
 					}
 
-					if(!(flags & FLAG_LEFT))
+					if(!(flags & FLAGS_LEFT))
 					{
-						while(l++ < width)
+						while(len++ < width)
 						{
-							putc(' ', stream);
+							putc(' ', fp);
 						}
 					}
 
-					while((*p != 0) && (!(flags & FLAG_PRECISION) || precision))
+					// string-output
+					while((*str != '\0') && (!(flags & FLAGS_PRECISION) || precision))
 					{
-						putc(*(p++), stream);
+						putc(*(str++), fp);
 						--precision;
 					}
 
-					if(flags & FLAG_LEFT)
+					// post padding
+					if(flags & FLAGS_LEFT)
 					{
-						while(l++ < width)
+						while(len++ < width)
 						{
-							putc(' ', stream);
+							putc(' ', fp);
 						}
 					}
 				}
-
 				format++;
 				break;
 			}
 
 			case 'p':
 			{
-				width = sizeof(void*) * 2U + 2;
-				flags |= FLAG_ZERO_PAD | FLAG_POINTER;
+				width = sizeof(void*) * 2U + 2; // 2 hex chars per byte + the '0x' prefix
+				flags |= FLAGS_ZEROPAD | FLAGS_POINTER;
 				uintptr_t value = (uintptr_t)va_arg(args, void*);
 
 				if(value == (uintptr_t)NULL)
 				{
-					reverse_output(stream, ")lin(", 5, width, flags);
+					output_reverse(fp, ")lin(", 5, width, flags);
 				}
 				else
 				{
-					print_int(stream, (size_t)value, false, BASE_HEX, precision, width, flags);
+					print_integer(fp, (unsigned long)value, false, BASE_HEX, precision, width,
+								  flags);
 				}
 
 				format++;
@@ -593,25 +676,55 @@ void format_string(FILE* stream, const char* format, va_list args)
 
 			case '%':
 			{
-				putc('%', stream);
+				putc('%', fp);
+				format++;
+				break;
+			}
+
+			case 'n':
+			{
+				// Do we want to implement brainfuck interpreter in the kernel? Hell yeah
+				if(flags & FLAGS_CHAR)
+				{
+					*(va_arg(args, char*)) = (char)fp->position;
+				}
+				else if(flags & FLAGS_SHORT)
+				{
+					*(va_arg(args, short*)) = (short)fp->position;
+				}
+				else if(flags & FLAGS_LONG)
+				{
+					*(va_arg(args, long*)) = (long)fp->position;
+				}
+				else if(flags & FLAGS_LONG_LONG)
+				{
+					*(va_arg(args, long long*)) = (long long)fp->position;
+				}
+				else
+				{
+					*(va_arg(args, int*)) = (int)fp->position;
+				}
+
 				format++;
 				break;
 			}
 
 			default:
 			{
-				putc(*format, stream);
+				putc(*format, fp);
 				format++;
 				break;
 			}
 		}
 	}
-}
-
-int vsnprintf_internal(FILE* s, const char* format, va_list args)
-{
-	format_string(s, format, args);
-	append_termination_internal(s);
 
 	return SYSTEM_OK;
+}
+
+int vsnprintf_internal(FILE* fp, const char* format, va_list args)
+{
+	error_t err = format_string(fp, format, args);
+	append_termination(fp);
+
+	return err;
 }

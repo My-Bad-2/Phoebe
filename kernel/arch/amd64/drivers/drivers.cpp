@@ -12,9 +12,9 @@ void initialize_streams()
 {
 	static FILE simple_file = {
 		.flags = 0,
-		.buffer_size = ULONG_MAX,
+		.buffer_size = INT_MAX,
 		.position = 0,
-		.buffer = NULL,
+		.buffer = nullptr,
 		.write_func = [](int c) -> int {
 			return uart::putc(c);
 		},
@@ -33,6 +33,6 @@ void arch_initialize()
 	{
 	}
 
-    initialize_streams();
+	initialize_streams();
 }
 } // namespace drivers
