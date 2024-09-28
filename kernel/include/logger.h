@@ -48,6 +48,11 @@ void log_msg(int __log_level, const char* __restrict __format, ...) __PRINTFLIKE
 // Note: Use this at the end of panic messages to halt the kernel
 void log_panik(const char* __restrict __format, ...) __PRINTFLIKE(1, 2);
 
+// To be used at the start of a component to be initialized,
+// to be used in pair with `log_end_initialization`
+void log_begin_intialization(const char* __restrict __component);
+void log_end_intialization(void);
+
 __CDECLS_END
 
 #define log_trace(__format, ...) log_msg(LOG_LEVEL_TRACE, __format, ##__VA_ARGS__)

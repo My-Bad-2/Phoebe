@@ -80,7 +80,7 @@ ovmf_binaries = ovmf.get_variable(get_option('kernel_arch'))
 
 dependencies = [
     dependency('limine'),
-    dependency('libstdcxx', default_options: 'arch=' + get_option('kernel_arch'))
+    dependency('freestnd_cxx_hdrs'),
 ]
 
 dependencies_includes = []

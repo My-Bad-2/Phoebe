@@ -1,6 +1,7 @@
 #include <drivers/drivers.hpp>
 #include <arch.hpp>
 #include <logger.h>
+#include <cpu/gdt.hpp>
 
 __CDECLS_BEGIN
 
@@ -15,15 +16,9 @@ __NO_RETURN void kernel_main()
 
 	log_set_style(style);
 
-	log_trace("Hello, World!");
-	log_info("Hello, World!");
-	log_debug("Hello, World!");
-	log_warning("Hello, World!");
-	log_error("Hello, World!");
-	log_panic("Hello, World!");
+	arch::initialize();
 
-	// Halt the kernel
-	log_panik("Hello, World!");
+	log_info("Hello, World!");
 
 	arch::halt(true);
 }

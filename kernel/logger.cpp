@@ -60,3 +60,16 @@ void log_panik(const char* restrict format, ...)
 
 	arch::halt(false);
 }
+
+void log_begin_intialization(const char* __restrict component)
+{
+	const char* color = logger::get_log_color(LOG_LEVEL_INFO);
+	const char* tag = logger::get_level_tag(LOG_LEVEL_INFO);
+
+	fprintf(stderr, "%s%s -> Initializing %s", color, tag, component);
+}
+
+void log_end_intialization(void)
+{
+	fprintf(stderr, " ... OK!" RESET_TEXT "\n");
+}

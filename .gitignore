@@ -88,6 +88,6 @@ build/
 .cache/
 .vscode/
 
-external/libstdcxx/
 external/limine/
 external/ovmf_binaries/
+external/freestnd_cxx_hdrs/
