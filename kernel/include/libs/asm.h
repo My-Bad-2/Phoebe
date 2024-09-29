@@ -1,5 +1,5 @@
 #ifndef LIBS_ASM_H
-#define LIBS_ASM_H
+#define LIBS_ASM_H 1
 
 #ifdef __ASSEMBLER__
 

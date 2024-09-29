@@ -1,5 +1,5 @@
 #ifndef LIBS_STYLING_H
-#define LIBS_STYLING_H
+#define LIBS_STYLING_H 1
 
 #define RESET_TEXT "\033[0m"
 #define BOLD_TEXT "\033[1m"

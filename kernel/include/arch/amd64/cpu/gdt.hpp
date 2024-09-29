@@ -1,18 +1,11 @@
 #ifndef CPU_GDT_HPP
-#define CPU_GDT_HPP
+#define CPU_GDT_HPP 1
 
 #include <sys/defs.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <errno.h>
 #include <array>
-
-#define NULL_SELECTOR 0x00
-#define KERNEL_CODE_SELECTOR 0x08
-#define KERNEL_DATA_SELECTOR 0x10
-#define USER_DATA_SELECTOR 0x18
-#define USER_CODE_SELECTOR 0x20
-#define TSS_SELECTOR 0x28
 
 namespace cpu
 {

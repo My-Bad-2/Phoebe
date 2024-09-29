@@ -1,5 +1,5 @@
 #ifndef CPU_CPU_HPP
-#define CPU_CPU_HPP
+#define CPU_CPU_HPP 1
 
 namespace cpu
 {

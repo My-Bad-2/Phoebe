@@ -1,5 +1,5 @@
 #ifndef LIBS_ARCH_ASM_H
-#define LIBS_ARCH_ASM_H
+#define LIBS_ARCH_ASM_H 1
 
 #ifdef __ASSEMBLER__
 // clang-format off
