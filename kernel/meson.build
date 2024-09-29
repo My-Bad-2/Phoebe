@@ -13,6 +13,7 @@ kernel_sources = files(
 
 subdir('drivers')
 subdir('arch' / get_option('kernel_arch'))
+subdir('glue')
 
 clangtidy_files += kernel_sources
 
