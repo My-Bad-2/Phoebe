@@ -13,7 +13,5 @@ void initialize()
 	interrupts::initialize();
 	
 	enable_interrupts();
-
-	asm volatile("div %ah");
 }
 } // namespace cpu

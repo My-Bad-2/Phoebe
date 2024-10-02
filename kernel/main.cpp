@@ -2,6 +2,7 @@
 #include <arch.hpp>
 #include <logger.h>
 #include <cpu/gdt.hpp>
+#include <memory/physical.hpp>
 
 __CDECLS_BEGIN
 
@@ -15,6 +16,8 @@ __NO_RETURN void kernel_main()
 	};
 
 	log_set_style(style);
+
+	memory::physical_initialize();
 
 	arch::initialize();
 

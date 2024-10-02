@@ -8,13 +8,15 @@ endif
 
 kernel_sources = files(
     'main.cpp',
-    'logger.cpp'
+    'logger.cpp',
+    'limine.c'
 )
 
 subdir('drivers')
 subdir('arch' / get_option('kernel_arch'))
 subdir('glue')
 subdir('libs')
+subdir('memory')
 
 clangtidy_files += kernel_sources
 
