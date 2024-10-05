@@ -4,3 +4,4 @@ kernel_sources += files(
 
 subdir('cpu')
 subdir('drivers')
+subdir('memory')

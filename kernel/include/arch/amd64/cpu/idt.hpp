@@ -53,9 +53,10 @@ struct IdtSegment
 	uint8_t type_attributes;
 	uint16_t base_mid;
 	uint32_t base_high;
-    uint32_t reserved;
+	uint32_t reserved;
 
-	void create_entry(void* __handler, uint8_t __ist, uint8_t __type, uint8_t __dpl, uint16_t __selector);
+	void create_entry(void* __handler, uint8_t __ist, uint8_t __type, uint8_t __dpl,
+					  uint16_t __selector);
 } __PACKED;
 
 struct IdtTable

@@ -285,16 +285,15 @@
 #define HW_DEBUG_REGISTERS_COUNT 4
 
 #ifndef __ASSEMBLER__
-	#include <stdint.h>
 
 struct Iframe
 {
-	uint64_t rdi, rsi, rbp, rbx, rdx, rcx, rax;
-	uint64_t r8, r9, r10, r11, r12, r13, r14, r15;
-	uint64_t vector;
-	uint64_t err_code;
-	uint64_t ip, cs, flags;
-	uint64_t user_sp, user_ss;
+	unsigned long rdi, rsi, rbp, rbx, rdx, rcx, rax;
+	unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
+	unsigned long vector;
+	unsigned long err_code;
+	unsigned long ip, cs, flags;
+	unsigned long user_sp, user_ss;
 };
 #endif
 

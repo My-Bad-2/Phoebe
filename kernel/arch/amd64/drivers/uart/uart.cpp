@@ -1,4 +1,5 @@
 #include <arch.hpp>
+
 #include <drivers/uart.hpp>
 #include "uart_defs.h"
 

@@ -1,12 +1,13 @@
-#include "limine.h"
-#include <memory/physical.hpp>
-#include <libs/bitmap.hpp>
-#include <kernel.h>
 #include <errno.h>
-#include <memory/memory.hpp>
-#include <algorithm>
 #include <string.h>
 #include <logger.h>
+
+#include <algorithm>
+
+#include <memory/physical.hpp>
+#include <memory/memory.hpp>
+
+#include <libs/bitmap.hpp>
 
 namespace memory
 {
@@ -161,6 +162,12 @@ void physical_initialize()
 		}
 	}
 
+	// Memory Range [0, 0x1000) is guaranteed to be unusable by the bootloader.
+	if(stats.lowest_usable_addr == 0)
+	{
+		stats.lowest_usable_addr = 0x1000;
+	}
+
 	stats.highest_page = div_roundup(stats.highest_usable_addr, PAGE_SIZE);
 
 	size_t bitmap_entries = stats.highest_page;
@@ -226,6 +233,7 @@ void* physical_allocate()
 		if(!page_is_used(reinterpret_cast<void*>(addr)))
 		{
 			alloc_page(reinterpret_cast<void*>(addr));
+			memset(to_higher_half(reinterpret_cast<void*>(addr)), 0, PAGE_SIZE);
 
 			return reinterpret_cast<void*>(addr);
 		}
@@ -282,6 +290,7 @@ void* physical_allocate(size_t count, int flags = 0)
 		{
 			if(alloc_pages(reinterpret_cast<void*>(start), count) == SYSTEM_OK)
 			{
+				memset(to_higher_half(reinterpret_cast<void*>(start)), 0, count * PAGE_SIZE);
 				return reinterpret_cast<void*>(start);
 			}
 

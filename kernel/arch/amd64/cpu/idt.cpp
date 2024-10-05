@@ -1,8 +1,9 @@
+#include <logger.h>
 #include <libs/trace.h>
+
 #include <cpu/idt.hpp>
 #include <cpu/gdt.hpp>
 #include <cpu/registers.h>
-#include <logger.h>
 
 #define TYPE_ATTRIBUTE_PRESENT (1 << 7)
 #define TYPE_ATTRIBUTE_DPL(x) (x << 5)

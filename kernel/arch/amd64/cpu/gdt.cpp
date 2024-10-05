@@ -1,4 +1,5 @@
 #include <logger.h>
+
 #include <cpu/gdt.hpp>
 
 #define GDT_ENTRY_COUNT 5

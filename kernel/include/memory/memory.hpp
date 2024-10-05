@@ -3,10 +3,11 @@
 
 #include <kernel.h>
 #include <concepts>
+#include <stddef.h>
 
-#define PAGE_SIZE 0x1000
-#define PAGE_SIZE_2MiB 0x200000
-#define PAGE_SIZE_1GiB 0x40000000
+#define PAGE_SIZE 0x1000UL
+#define PAGE_SIZE_2MiB 0x200000UL
+#define PAGE_SIZE_1GiB 0x40000000UL
 
 namespace memory
 {
@@ -49,6 +50,8 @@ inline constexpr auto div_roundup(std::integral auto __addr, std::integral auto 
 {
 	return align_down(__addr, __size) / __size;
 }
+
+void initialize();
 } // namespace memory
 
 #endif // MEMORY_MEMORY_HPP

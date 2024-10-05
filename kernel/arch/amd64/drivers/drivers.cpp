@@ -1,6 +1,7 @@
-#include <drivers/uart.hpp>
 #include <stdio.h>
 #include <limits.h>
+
+#include <drivers/uart.hpp>
 
 FILE* stdin = nullptr;
 FILE* stdout = nullptr;

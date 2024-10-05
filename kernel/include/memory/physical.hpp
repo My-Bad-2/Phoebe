@@ -11,8 +11,7 @@ namespace memory
 struct PhysicalMemoryStats
 {
 	uintptr_t highest_physical_addr;
-	// 0-0x1000 is guaranteed to be non-usable in limine
-	uintptr_t lowest_usable_addr = 0x1000;
+	uintptr_t lowest_usable_addr;
 	uintptr_t highest_usable_addr;
 
 	size_t highest_page;
