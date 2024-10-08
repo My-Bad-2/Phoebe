@@ -1,20 +1,16 @@
-#include "memory/physical.hpp"
-#include <sys/defs.h>
 #include <string.h>
 #include <lock.hpp>
 #include <logger.h>
 
 #include <libs/bitmap.hpp>
 
+#include <memory/physical.hpp>
 #include <memory/virtual.hpp>
 #include <memory/heap.hpp>
 #include <memory/memory.hpp>
 
 #include <bit>
 
-#include <sys/defs.h>
-
-#define BUDDY_ALLOC_IMPLEMENTATION
 #define BUDDY_CPP_MANGLED
 #include "buddy_alloc.h"
 
@@ -53,6 +49,28 @@ void* heap_malloc(size_t size)
 
 	lock::ScopedLock guard(heap_lock);
 	return buddy_malloc(buddy, size);
+}
+
+void* heap_calloc(size_t nmemb, size_t size)
+{
+	if((size == 0) || (nmemb == 0))
+	{
+		return nullptr;
+	}
+
+	lock::ScopedLock guard(heap_lock);
+	return buddy_calloc(buddy, nmemb, size);
+}
+
+void* heap_realloc(void* ptr, size_t size)
+{
+	if((ptr == nullptr) || (size == 0))
+	{
+		return nullptr;
+	}
+
+	lock::ScopedLock guard(heap_lock);
+	return buddy_realloc(buddy, ptr, size, false);
 }
 
 void heap_free(void* ptr)

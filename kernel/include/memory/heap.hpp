@@ -9,6 +9,8 @@ namespace memory
 void heap_init();
 
 void* heap_malloc(size_t __size);
+void* heap_calloc(size_t __nmemb, size_t __size);
+void* heap_realloc(void* __ptr, size_t __new_size);
 void heap_free(void* __ptr);
 } // namespace memory
 

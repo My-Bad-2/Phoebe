@@ -50,6 +50,11 @@ div_t div(int __numer, int __denom) __CONST;
 ldiv_t ldiv(long int __numer, long int __denom) __CONST;
 lldiv_t lldiv(long long int __numer, long long int __denom) __CONST;
 
+extern void* malloc(size_t __size) __MALLOC __ALLOC_SIZE(1) __WARN_UNUSED_RESULT;
+extern void* calloc(size_t __nmemb, size_t __size) __MALLOC __ALLOC_SIZE(1, 2) __WARN_UNUSED_RESULT;
+extern void* realloc(void* __ptr, size_t __new_size) __ALLOC_SIZE(2) __WARN_UNUSED_RESULT;
+extern void free(void* __ptr);
+
 __CDECLS_END
 
 #endif // _STDLIB_H
