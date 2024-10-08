@@ -51,6 +51,11 @@ inline constexpr auto div_roundup(std::integral auto __addr, std::integral auto 
 	return align_down(__addr, __size) / __size;
 }
 
+inline constexpr bool is_aligned(std::integral auto __addr, std::integral auto __size)
+{
+	return align_down(__addr, __size) == __addr;
+}
+
 void initialize();
 } // namespace memory
 

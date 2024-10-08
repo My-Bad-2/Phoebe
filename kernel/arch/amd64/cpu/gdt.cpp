@@ -1,4 +1,5 @@
 #include <logger.h>
+#include <lock.hpp>
 
 #include <cpu/gdt.hpp>
 
@@ -34,6 +35,7 @@ namespace gdt
 {
 GdtTable gdt_table = {};
 Tss tss = {};
+lock::mutex lock = {};
 
 void GdtSegment::create_entry(uint32_t base, uint32_t limit, uint8_t granularity, uint8_t access)
 {
@@ -62,6 +64,8 @@ void TssSegment::create_entry(void* tss)
 
 error_t initialize()
 {
+	lock::ScopedLock guard(lock);
+
 	log_begin_intialization("Global Descriptor Table");
 
 	gdt_table[0].create_entry(0, 0, 0, 0);

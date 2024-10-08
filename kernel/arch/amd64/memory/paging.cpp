@@ -10,7 +10,7 @@
 #include <cpu/cpu.hpp>
 #include <cpu/features.h>
 
-#define GET_PML_ENTRY(virtual_address, offset) ((virtual_address & (0x1ffUL << offset)) >> offset)
+#define GET_PML_ENTRY(virtual_address, offset) (((virtual_address) >> offset) & 0x1fful)
 
 namespace memory
 {
@@ -150,7 +150,7 @@ void* PageMap::get_next_lvl(PageTableEntry& entry, bool allocate, uintptr_t virt
 
 	if(entry.is_valid())
 	{
-		if(entry.is_large() && old_page_size != static_cast<size_t>(-1))
+		if(entry.is_large() && (old_page_size != static_cast<size_t>(-1)))
 		{
 			size_t old_flags = this->vmm_flags(entry.get_flags(), old_page_size > PAGE_SIZE);
 			uintptr_t old_phys_address = entry.get_address();
@@ -253,7 +253,9 @@ PageTableEntry* PageMap::virtual_to_entry(uintptr_t virtual_address, bool alloca
 
 uintptr_t PageMap::virtual_to_physical(uintptr_t virtual_address, size_t flags)
 {
-	size_t page_size = flag_to_page_size(flags);
+	lock::ScopedLock guard(this->lock_);
+
+	const size_t page_size = flag_to_page_size(flags);
 	PageTableEntry* pml_entry = this->virtual_to_entry(virtual_address, false, page_size, true);
 
 	if((pml_entry == nullptr) || !pml_entry->get_flags(PAGE_FLAG_PRESENT))
@@ -349,6 +351,8 @@ error_t PageMap::map_page(uintptr_t virtual_address, uintptr_t physical_address,
 		return SYSTEM_OK;
 	};
 
+	lock::ScopedLock guard(this->lock_);
+
 	const size_t page_size = flag_to_page_size(flags);
 	const size_t parsed_flags = this->parse_flags(flags);
 
@@ -386,6 +390,7 @@ error_t PageMap::unmap_page(uintptr_t virtual_address, size_t flags)
 		return SYSTEM_OK;
 	};
 
+	lock::ScopedLock guard(this->lock_);
 	const size_t page_size = flag_to_page_size(flags);
 
 	if((page_size == PAGE_SIZE_1GiB) && !virt::pml3_translation)
@@ -406,6 +411,8 @@ error_t PageMap::unmap_page(uintptr_t virtual_address, size_t flags)
 
 error_t PageMap::setflags_page(uintptr_t virtual_address, size_t flags)
 {
+	lock::ScopedLock guard(this->lock_);
+
 	const size_t page_size = flag_to_page_size(flags);
 	const size_t parsed_flags = this->parse_flags(flags);
 	PageTableEntry* pml_entry = this->virtual_to_entry(virtual_address, true, page_size, true);

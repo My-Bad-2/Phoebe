@@ -66,6 +66,7 @@
 ### Features
 
 - Universal Asynchronous Receiver-Transmitter (UART)
+- Memory Allocation
 
 <!-- Getting Started -->
 ## Getting Started
@@ -111,13 +112,18 @@ Configure the [scripts/clang.amd64.cross-file](scripts/clang.amd64.cross-file) f
 ## Roadmap
 
 * [x] Universal Asynchronous Receiver-Transmitter (UART)
-* [ ] Logging
-* [ ] Global Descriptor Table
-* [ ] Interrupt Descriptor Table
-* [ ] Physical Memory Manager
-* [ ] Paging
-* [ ] Virtual Memory Manager
-* [ ] Heap
+* [x] Logging
+* [x] Global Descriptor Table
+* [x] Interrupt Descriptor Table
+* [x] Physical Memory Manager
+* [x] Paging
+* [x] Virtual Memory Manager
+* [x] Heap
+* [ ] Interrupt Handlers
+* [ ] Advanced Configuration and Power Interface
+* [ ] Timer
+* [ ] Multithreading
+* [ ] Symmetric Multiprocessing
 
 <!-- Code of Conduct -->
 ### Code of Conduct
@@ -138,6 +144,7 @@ Project Link: [https://github.com/My-Bad-2/Phoebe](https://github.com/My-Bad-2/P
 <!-- Acknowledgments -->
 ## Acknowledgements
 
+ - [Buddy Alloc Contributors](https://github.com/spaskalev/buddy_alloc)
  - [OSDEV wikipedia](https://wiki.osdev.org)
  - [OSDEV Discord Server](https://discord.gg/RnCtsqD)
  - [Embedded Artistery](https://github.com/embeddedartistry)

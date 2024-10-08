@@ -7,6 +7,7 @@
 #include <sys/defs.h>
 
 #include <utility>
+#include <lock.hpp>
 
 #define PAGE_ADDR_MASK 0x000ffffffffff000
 
@@ -115,6 +116,7 @@ class PageMap
 	void destroy_level(PageTable* __pml, int __start, int __end, int __level);
 
 	PageTable* top_lvl_ = nullptr;
+	lock::mutex lock_;
 };
 
 extern PageMap base_pagemap;

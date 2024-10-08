@@ -18,6 +18,8 @@
 #define MAP_WRITE_BACK (1 << 9)
 #define MAP_NO_CACHE (1 << 10)
 
+#define VIRTUAL_ADDRESS_SPACE_LIMIT 0xffff8fffffffffff
+
 namespace memory
 {
 void virtual_initialize();

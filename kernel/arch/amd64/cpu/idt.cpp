@@ -1,5 +1,7 @@
+#include "cpu/cpu.hpp"
 #include <logger.h>
 #include <libs/trace.h>
+#include <mmu.hpp>
 
 #include <cpu/idt.hpp>
 #include <cpu/gdt.hpp>
@@ -52,9 +54,37 @@ void dump_interrupt_frame(Iframe* iframe)
 			  iframe->user_ss);
 }
 
+void dump_page_fault_error(Iframe* iframe, uintptr_t cr2)
+{
+	uint64_t error_code = iframe->err_code;
+
+	uintptr_t virt_addr = cr2;
+	uintptr_t ssp = iframe->user_ss & 0xffffffff;
+	uintptr_t sp = iframe->user_sp;
+	uintptr_t cs = iframe->cs & 0xffffffff;
+	uintptr_t ip = iframe->ip;
+
+	log_panic("<PAGE FAULT> Instruction Pointer  = 0x%lx:0x%lx", cs, ip);
+	log_panic("<PAGE FAULT> Stack Pointer        = 0x%lx:0x%lx", ssp, sp);
+	log_panic("<PAGE FAULT> Fault Linear Address = 0x%lx", virt_addr);
+	log_panic("<PAGE FAULT> Error Code Value     = 0x%lx", error_code);
+	log_panic("<PAGE FAULT> Error Code Type      = %s %s %s%s %s, %s",
+			  error_code & PAGE_FAULT_USER ? "user" : "supervisor",
+			  error_code & PAGE_FAULT_WRITE ? "write" : "read",
+			  error_code & PAGE_FAULT_INSTRUCTION_FETCH ? "instruction" : "data",
+			  error_code & PAGE_FAULT_RESERVE_WRITE ? "reserved write" : "",
+			  error_code & PAGE_FAULT_SHADOW_STACK ? "shadow stack" : "",
+			  error_code & PAGE_FAULT_PRESENT ? "protection violation" : "page not present");
+}
+
 void exception_handler(Iframe* iframe)
 {
 	dump_stacktrace();
+
+	if(iframe->err_code == EXCEPTION_PAGE_FAULT)
+	{
+		dump_page_fault_error(iframe, read_cr2());
+	}
 
 	dump_interrupt_frame(iframe);
 	log_panik("Unhandled Exception 0x%lx!", iframe->vector);

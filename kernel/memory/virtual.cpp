@@ -1,3 +1,4 @@
+#include "kernel.h"
 #include <logger.h>
 #include <assert.h>
 
@@ -19,12 +20,11 @@ void virtual_initialize()
 
 	base_pagemap.initialize(true);
 
-	auto [page_size, flags] = required_page_size(PAGE_SIZE_1GiB * 4);
-
-	for(uintptr_t i = 0; i < (PAGE_SIZE_1GiB * 4); i += page_size)
+	// Virtual memory allocate doesn't work when mapping with size > 0x1000.
+	// So, Map everything with page size 0x1000.
+	for(uintptr_t i = 0; i < (PAGE_SIZE_1GiB * 4); i += PAGE_SIZE)
 	{
-		assert(!base_pagemap.map_page(to_higher_half(i), i,
-									  MAP_READ | MAP_WRITE | flags | MAP_WRITE_BACK));
+		assert(!base_pagemap.map_page(to_higher_half(i), i, MAP_READ | MAP_WRITE | MAP_WRITE_BACK));
 	}
 
 	// Map if any memory map entry is above 4 GiB.
@@ -48,25 +48,8 @@ void virtual_initialize()
 		}
 
 		size_t size = top - base;
-		auto [page_size, flags] = required_page_size(size);
 
-		size_t aligned_size = align_down(size, page_size);
-		size_t difference = size - aligned_size;
-
-		for(uintptr_t j = base; j < (base + aligned_size); j += page_size)
-		{
-			if(j < (PAGE_SIZE_1GiB * 4))
-			{
-				continue;
-			}
-
-			assert(
-				!base_pagemap.map_page(to_higher_half(j), j, MAP_READ | MAP_WRITE | flags | cache));
-		}
-
-		base += aligned_size;
-
-		for(uintptr_t j = base; j < (base + difference); j += PAGE_SIZE)
+		for(uintptr_t j = base; j < (base + size); j += PAGE_SIZE)
 		{
 			if(j < (PAGE_SIZE_1GiB * 4))
 			{
@@ -146,22 +129,17 @@ std::pair<size_t, size_t> required_page_size(size_t size)
 
 void* virtual_allocate(uintptr_t base, uintptr_t limit, size_t count, size_t flags)
 {
-	base = align_down(base, PAGE_SIZE);
-	limit = align_down(limit, PAGE_SIZE);
-
 	const size_t size = count * PAGE_SIZE;
 	uintptr_t start = base;
 	uintptr_t end = limit - (count * PAGE_SIZE);
 	uintptr_t address = 0;
 	PageMap* pagemap = get_current_pagemap();
 
-	auto [page_size, page_flag] = required_page_size(size);
-
 	do
 	{
-		for(address = start; address < (start + size); address += page_size)
+		for(address = start; address < (start + size); address += PAGE_SIZE)
 		{
-			if(pagemap->virtual_to_entry(address, false, page_size, true)->is_valid())
+			if(pagemap->virtual_to_entry(address, false, PAGE_SIZE, true)->is_valid())
 			{
 				// Found a valid page
 				break;
@@ -170,22 +148,25 @@ void* virtual_allocate(uintptr_t base, uintptr_t limit, size_t count, size_t fla
 
 		if(address >= (start + size))
 		{
-			for(size_t i = 0; i < size; i += page_size)
+			for(size_t i = 0; i < size; i += PAGE_SIZE)
 			{
 				void* physical_address = physical_allocate();
-				if(pagemap->map_page(start + i, reinterpret_cast<uintptr_t>(physical_address),
-									 flags) != SYSTEM_OK)
+				if(pagemap->map_page(start + i, reinterpret_cast<uintptr_t>(physical_address) + i,
+									 flags))
 				{
-					return nullptr;
+					goto failure;
 				}
 			}
 
+			pagemap->load();
 			return reinterpret_cast<void*>(start);
 		}
 
 		start += PAGE_SIZE;
 	} while(start < end);
 
+failure:
+	pagemap->load();
 	return nullptr;
 }
 
@@ -195,7 +176,8 @@ void* virtual_allocate(size_t count, size_t flags)
 	physical_get_status(&stats);
 
 	const uintptr_t virtual_base = to_higher_half(stats.highest_physical_addr);
-	return virtual_allocate(virtual_base, 0xffff8fffffffffff, count, flags);
+	const uintptr_t kernel_virtual_base = kernel_address_request.response->virtual_base;
+	return virtual_allocate(virtual_base, kernel_virtual_base, count, flags);
 }
 
 void virtual_free(void* ptr, size_t count)
@@ -216,6 +198,7 @@ void virtual_free(void* ptr, size_t count)
 
 		pagemap->unmap_page(address);
 		physical_free(reinterpret_cast<void*>(physical_address));
+		pagemap->load();
 	}
 }
 } // namespace memory
