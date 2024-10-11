@@ -55,6 +55,8 @@ extern void* calloc(size_t __nmemb, size_t __size) __MALLOC __ALLOC_SIZE(1, 2) _
 extern void* realloc(void* __ptr, size_t __new_size) __ALLOC_SIZE(2) __WARN_UNUSED_RESULT;
 extern void free(void* __ptr);
 
+extern void abort(void) __NO_RETURN;
+
 __CDECLS_END
 
 #endif // _STDLIB_H

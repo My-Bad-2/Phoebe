@@ -1,5 +1,6 @@
 kernel_sources += files(
-    'drivers.cpp'
+    'drivers.cpp',
+    'interrupts.cpp'
 )
 
 subdir('uart')

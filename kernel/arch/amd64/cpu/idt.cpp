@@ -1,8 +1,10 @@
-#include "cpu/cpu.hpp"
 #include <logger.h>
 #include <libs/trace.h>
 #include <mmu.hpp>
 
+#include <drivers/interrupts.hpp>
+
+#include <cpu/cpu.hpp>
 #include <cpu/idt.hpp>
 #include <cpu/gdt.hpp>
 #include <cpu/registers.h>
@@ -110,6 +112,15 @@ error_t initialize()
 		idt_table[vector].create_entry(isr_table[vector], 0, type, dpl, KERNEL_CODE_SELECTOR);
 	}
 
+	for(int vector = 0; vector < PLATFORM_INTERRUPT_BASE; vector++)
+	{
+		using namespace drivers::interrupts;
+
+		InterruptHandler& handler = get_handler(vector);
+		handler.set(exception_handler);
+		handler.vector = vector;
+	}
+
 	IdtRegister idtr = {
 		sizeof(IdtTable) - 1,
 		reinterpret_cast<uint64_t>(&idt_table),
@@ -128,12 +139,11 @@ extern "C"
 {
 	void exception_handler(Iframe* iframe)
 	{
-		if(iframe->vector < 0x20)
-		{
-			cpu::interrupts::exception_handler(iframe);
-		}
+		using namespace drivers::interrupts;
+		InterruptHandler& handler = get_handler(iframe->vector);
+		handler(iframe);
 
-		log_panik("Interrupt 0x%.16lx triggered!", iframe->vector);
+		log_panik("Interrupt 0x%lx triggered!", iframe->vector);
 	}
 
 	void nmi_handler(Iframe* iframe)
