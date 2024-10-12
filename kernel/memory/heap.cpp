@@ -20,7 +20,7 @@ void* heap_arena = nullptr;
 buddy* buddy = nullptr;
 lock::mutex heap_lock = {};
 
-void heap_init()
+void heap_initialize()
 {
 	PhysicalMemoryStats stats = {};
 

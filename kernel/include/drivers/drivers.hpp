@@ -4,6 +4,7 @@
 namespace drivers
 {
 void initialize();
+void early_initialize();
 } // namespace drivers
 
 #endif // DRIVERS_DRIVERS_HPP

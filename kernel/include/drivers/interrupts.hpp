@@ -71,8 +71,13 @@ struct InterruptHandler
 	}
 };
 
+void initialize();
 std::pair<InterruptHandler&, int> allocate_handler(int __hint = 0);
 InterruptHandler& get_handler(int __vector);
+
+void set_interrupt_mask(int __vector);
+void clear_interrupt_mask(int __vector);
+void issue_eoi(int __vector);
 } // namespace interrupts
 } // namespace drivers
 

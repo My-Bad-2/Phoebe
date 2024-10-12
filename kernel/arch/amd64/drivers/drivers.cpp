@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <limits.h>
 
+#include <drivers/pit.hpp>
 #include <drivers/uart.hpp>
 
 FILE* stdin = nullptr;
@@ -28,12 +29,22 @@ void initialize_streams()
 
 void arch_initialize()
 {
-	uart::set_port(UART_COM_PORT_1);
+	static bool early_init = false;
 
-	if(uart::initialize() != SYSTEM_OK)
+	if(!early_init)
 	{
-	}
+		early_init = true;
+		uart::set_port(UART_COM_PORT_1);
 
-	initialize_streams();
+		if(uart::initialize() != SYSTEM_OK)
+		{
+		}
+
+		initialize_streams();
+	}
+	else
+	{
+		timers::initialize_pit();
+	}
 }
 } // namespace drivers

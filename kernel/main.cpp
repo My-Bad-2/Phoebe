@@ -7,7 +7,7 @@ __CDECLS_BEGIN
 
 __NO_RETURN void kernel_main()
 {
-	drivers::initialize();
+	drivers::early_initialize();
 
 	LogStyle style = {
 		DEFAULT_TEXT_COLOR,
@@ -18,6 +18,7 @@ __NO_RETURN void kernel_main()
 
 	memory::initialize();
 	arch::initialize();
+	drivers::initialize();
 
 	log_info("Hello, World!");
 

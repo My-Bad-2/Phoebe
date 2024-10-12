@@ -6,7 +6,7 @@
 
 namespace memory
 {
-void heap_init();
+void heap_initialize();
 
 void* heap_malloc(size_t __size);
 void* heap_calloc(size_t __nmemb, size_t __size);

@@ -1,5 +1,6 @@
 #include <logger.h>
 #include <libs/trace.h>
+#include <stdlib.h>
 #include <mmu.hpp>
 
 #include <drivers/interrupts.hpp>
@@ -7,6 +8,7 @@
 #include <cpu/cpu.hpp>
 #include <cpu/idt.hpp>
 #include <cpu/gdt.hpp>
+#include <cpu/pic.hpp>
 #include <cpu/registers.h>
 
 #define TYPE_ATTRIBUTE_PRESENT (1 << 7)
@@ -19,7 +21,7 @@ namespace cpu
 {
 namespace interrupts
 {
-IdtTable idt_table = {};
+IdtTable* idt_table = nullptr;
 
 inline uint8_t idt_attribute(uint8_t type, uint8_t dpl)
 {
@@ -99,6 +101,8 @@ error_t initialize()
 
 	log_begin_intialization("Interrupt Descriptor Table");
 
+	idt_table = static_cast<IdtTable*>(calloc(1, sizeof(IdtTable)));
+
 	for(int vector = 0; vector < MAX_IDT_ENTRIES; vector++)
 	{
 		switch(vector)
@@ -109,7 +113,8 @@ error_t initialize()
 				dpl = IDT_DPL0;
 		}
 
-		idt_table[vector].create_entry(isr_table[vector], 0, type, dpl, KERNEL_CODE_SELECTOR);
+		idt_table->entries[vector].create_entry(isr_table[vector], 0, type, dpl,
+												KERNEL_CODE_SELECTOR);
 	}
 
 	for(int vector = 0; vector < PLATFORM_INTERRUPT_BASE; vector++)
@@ -123,10 +128,12 @@ error_t initialize()
 
 	IdtRegister idtr = {
 		sizeof(IdtTable) - 1,
-		reinterpret_cast<uint64_t>(&idt_table),
+		reinterpret_cast<uint64_t>(idt_table),
 	};
 
 	load_idt(&idtr);
+
+	pic_initialize(PLATFORM_INTERRUPT_BASE, PLATFORM_INTERRUPT_BASE + 8);
 
 	log_end_intialization();
 
@@ -141,9 +148,15 @@ extern "C"
 	{
 		using namespace drivers::interrupts;
 		InterruptHandler& handler = get_handler(iframe->vector);
+
+		if(!handler.reserved)
+		{
+			log_panik("Interrupt 0x%lx triggered!", iframe->vector);
+		}
+
 		handler(iframe);
 
-		log_panik("Interrupt 0x%lx triggered!", iframe->vector);
+		issue_eoi(iframe->vector);
 	}
 
 	void nmi_handler(Iframe* iframe)

@@ -1,3 +1,6 @@
+#include <assert.h>
+
+#include <cpu/pic.hpp>
 #include <cpu/idt.hpp>
 #include <drivers/interrupts.hpp>
 
@@ -5,7 +8,7 @@ namespace drivers
 {
 namespace interrupts
 {
-std::array<InterruptHandler, MAX_IDT_ENTRIES> handlers = {};
+std::array<InterruptHandler, MAX_IDT_ENTRIES> handlers;
 
 std::pair<InterruptHandler&, int> allocate_handler(int vector)
 {
@@ -20,8 +23,8 @@ std::pair<InterruptHandler&, int> allocate_handler(int vector)
 		{
 			handlers[i].reserved = true;
 			handlers[i].vector = i;
-		
-        	return {handlers[i], i};
+
+			return {handlers[i], i};
 		}
 	}
 
@@ -32,6 +35,24 @@ std::pair<InterruptHandler&, int> allocate_handler(int vector)
 InterruptHandler& get_handler(int vector)
 {
 	return handlers[vector];
+}
+
+void set_interrupt_mask(int vector)
+{
+	assert((vector >= PLATFORM_INTERRUPT_BASE) && (vector <= (PLATFORM_INTERRUPT_BASE + 16)));
+	cpu::interrupts::pic_set_mask(vector - PLATFORM_INTERRUPT_BASE);
+}
+
+void clear_interrupt_mask(int vector)
+{
+	assert((vector >= PLATFORM_INTERRUPT_BASE) && (vector <= (PLATFORM_INTERRUPT_BASE + 16)));
+	cpu::interrupts::pic_clear_mask(vector - PLATFORM_INTERRUPT_BASE);
+}
+
+void issue_eoi(int vector)
+{
+	assert((vector >= PLATFORM_INTERRUPT_BASE) && (vector <= (PLATFORM_INTERRUPT_BASE + 16)));
+	cpu::interrupts::pic_send_eoi(vector - PLATFORM_INTERRUPT_BASE);
 }
 } // namespace interrupts
 } // namespace drivers

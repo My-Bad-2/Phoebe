@@ -119,7 +119,7 @@ Configure the [scripts/clang.amd64.cross-file](scripts/clang.amd64.cross-file) f
 * [x] Paging
 * [x] Virtual Memory Manager
 * [x] Heap
-* [ ] Interrupt Handlers
+* [x] Interrupt Handlers
 * [ ] Advanced Configuration and Power Interface
 * [ ] Timer
 * [ ] Multithreading

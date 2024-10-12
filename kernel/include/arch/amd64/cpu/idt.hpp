@@ -33,6 +33,23 @@
 #define PLATFORM_INTERRUPT_BASE (32)
 #define PLATFORM_MAX (239)
 
+#define IRQ_SYSTEM_TIMER (32)
+#define IRQ_KEYBOARD (33)
+#define IRQ_CASCADE (34)
+#define IRQ_SERIAL_PORT2 (35)
+#define IRQ_SERIAL_PORT1 (36)
+#define IRQ_SOUND (37)
+#define IRQ_FLOPPY (38)
+#define IRQ_PARALLEL_PORT (39);
+#define IRQ_RTC (40)
+#define IRQ_ACPI (41)
+#define IRQ_10 (42)
+#define IRQ_11 (43)
+#define IRQ_MOUSE (44)
+#define IRQ_CPU_COP (45)
+#define IRQ_PRIMARY_ATA (46)
+#define IRQ_SECONDARY_ATA (47)
+
 #define IDT_INTERRUPT_GATE 0xe
 #define IDT_TRAP_GATE 0xf
 

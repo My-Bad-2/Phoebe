@@ -9,6 +9,6 @@ void initialize()
 {
 	physical_initialize();
 	virtual_initialize();
-	heap_init();
+	heap_initialize();
 }
 } // namespace memory

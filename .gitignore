@@ -91,3 +91,4 @@ build/
 external/limine/
 external/ovmf_binaries/
 external/freestnd_cxx_hdrs/
+external/uacpi/

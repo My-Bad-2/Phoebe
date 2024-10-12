@@ -81,6 +81,7 @@ ovmf_binaries = ovmf.get_variable(get_option('kernel_arch'))
 dependencies = [
     dependency('limine'),
     dependency('freestnd_cxx_hdrs'),
+    dependency('uacpi')
 ]
 
 dependencies_includes = []

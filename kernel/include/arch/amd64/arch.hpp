@@ -52,6 +52,11 @@ inline void outp(uint16_t port, T val)
 	}
 }
 
+inline void io_wait()
+{
+	arch::outp<uint8_t>(0x80, 0);
+}
+
 __NO_RETURN inline void halt(bool interrupts = true)
 {
 	if(interrupts)

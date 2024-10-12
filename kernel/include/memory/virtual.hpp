@@ -24,8 +24,7 @@ namespace memory
 {
 void virtual_initialize();
 
-void* virtual_allocate(uintptr_t __base, uintptr_t __limit, size_t __count = 1,
-					   size_t __flags = MAP_WRITE | MAP_READ);
+void* virtual_allocate(uintptr_t __base, uintptr_t __limit, size_t __count, size_t __flags);
 void* virtual_allocate(size_t __count = 1, size_t __flags = MAP_WRITE | MAP_READ);
 
 void virtual_free(void* __ptr, size_t __count = 1);
