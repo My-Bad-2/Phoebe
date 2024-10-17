@@ -5,5 +5,6 @@ kernel_sources += files(
     'idt.cpp',
     'idt.S',
     'features.cpp',
-    'pic.cpp'
+    'pic.cpp',
+    'fpu.cpp'
 )

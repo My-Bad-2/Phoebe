@@ -15,6 +15,10 @@
 	((PAT_UNCACHABLE << 56) | (PAT_WRITE_BACK << 48) | (PAT_WRITE_PROTECT << 40) | \
 	 (PAT_WRITE_THROUGH << 32) | (PAT_WRITE_COMBINING << 24) | (PAT_FORCE_UNCACHABLE << 16))
 
+#define RFBM (static_cast<uint64_t>(-1))
+#define RFBM_LOW (static_cast<uint32_t>(RFBM))
+#define RFBM_HIGH (static_cast<uint32_t>(RFBM >> 32))
+
 namespace cpu
 {
 inline void invalidate_page(uintptr_t address)
@@ -87,6 +91,31 @@ inline void write_msr(uint32_t msr, uint64_t value)
 inline void enable_pat()
 {
 	write_msr(MSR_PAT, DEFAULT_PAT);
+}
+
+inline void fxsave(uint8_t* region)
+{
+	asm volatile("fxsaveq (%0)" ::"r"(region) : "memory");
+}
+
+inline void xsave(uint8_t* region)
+{
+	asm volatile("xsaveq (%0)" ::"r"(region), "a"(RFBM_LOW), "d"(RFBM_HIGH) : "memory");
+}
+
+inline void xsaveopt(uint8_t* region)
+{
+	asm volatile("xsaveopt64 (%0)" ::"r"(region), "a"(RFBM_LOW), "d"(RFBM_HIGH) : "memory");
+}
+
+inline void xrstor(uint8_t* region)
+{
+	asm volatile("xrstorq (%0)" ::"r"(region), "a"(RFBM_LOW), "d"(RFBM_HIGH) : "memory");
+}
+
+inline void fxrstor(uint8_t* region)
+{
+	asm volatile("fxrstorq (%0)" ::"r"(region), "a"(RFBM_LOW), "d"(RFBM_HIGH) : "memory");
 }
 
 void initialize();

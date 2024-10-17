@@ -26,8 +26,8 @@ if get_option('kernel_arch') == 'amd64'
     arch_spec_args += [
         '-march=x86-64',
         '-msoft-float',
-        '-mno-sse',
-        '-mno-sse2',
+        # '-mno-sse',
+        # '-mno-sse2',
         '-mno-red-zone',
         '-mcmodel=kernel',
     ]

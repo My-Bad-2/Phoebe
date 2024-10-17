@@ -1,3 +1,4 @@
+#include "limine.h"
 #include <kernel.h>
 #include <stddef.h>
 
@@ -42,6 +43,14 @@ volatile struct limine_paging_mode_request paging_mode_request = {
 	.max_mode = LIMINE_PAGING_MODE_X86_64_5LVL,
 #endif
 	.min_mode = LIMINE_PAGING_MODE_MIN,
+};
+
+__SECTION(".limine_requests")
+volatile struct limine_stack_size_request stack_size_request = {
+	.id = LIMINE_STACK_SIZE_REQUEST,
+	.revision = 0,
+	.response = NULL,
+	.stack_size = 0x200000ul,
 };
 
 __SECTION(".limine_requests_end_marker") __USED static volatile LIMINE_REQUESTS_END_MARKER;
