@@ -6,6 +6,7 @@
 #include <arch.hpp>
 #include <sys/defs.h>
 #include <memory>
+#include <drivers/timers.hpp>
 
 namespace lock
 {
@@ -56,6 +57,18 @@ class TicketLock
 
 		this->lock();
 		return true;
+	}
+
+	bool try_lock(size_t timeout)
+	{
+		size_t target = drivers::timers::get_time() + timeout;
+
+		while(this->is_locked() && drivers::timers::get_time() < target)
+		{
+			pause();
+		}
+
+		return this->try_lock();
 	}
 
   private:

@@ -1,3 +1,4 @@
+#include "drivers/acpi.hpp"
 #include <drivers/drivers.hpp>
 
 namespace drivers
@@ -11,5 +12,6 @@ void early_initialize() {
 void initialize()
 {
 	arch_initialize();
+	acpi::initialize();
 }
 } // namespace drivers

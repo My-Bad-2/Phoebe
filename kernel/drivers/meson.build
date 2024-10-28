@@ -1,1 +1,4 @@
-kernel_sources += files('drivers.cpp')
+kernel_sources += files(
+    'drivers.cpp',
+    'acpi.cpp'
+)

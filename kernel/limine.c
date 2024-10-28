@@ -1,4 +1,3 @@
-#include "limine.h"
 #include <kernel.h>
 #include <stddef.h>
 
@@ -51,6 +50,13 @@ volatile struct limine_stack_size_request stack_size_request = {
 	.revision = 0,
 	.response = NULL,
 	.stack_size = 0x200000ul,
+};
+
+__SECTION(".limine_requests")
+volatile struct limine_rsdp_request rsdp_request = {
+	.id = LIMINE_RSDP_REQUEST,
+	.revision = 0,
+	.response = NULL,
 };
 
 __SECTION(".limine_requests_end_marker") __USED static volatile LIMINE_REQUESTS_END_MARKER;

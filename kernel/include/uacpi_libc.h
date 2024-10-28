@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define UACPI_OVERRIDE_LIBC 1
+
 #define uacpi_memcpy memcpy
 #define uacpi_memset memset
 #define uacpi_memcmp memcmp

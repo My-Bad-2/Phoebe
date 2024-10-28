@@ -57,8 +57,9 @@
 #define _VECTOR_TCC 1
 
 #include <utility>
-#include <libs/vectors.hpp>
+
 #include <libs/bvector.hpp>
+#include <libs/vectors.hpp>
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {

@@ -26,8 +26,10 @@ void virtual_initialize();
 
 void* virtual_allocate(uintptr_t __base, uintptr_t __limit, size_t __count, size_t __flags);
 void* virtual_allocate(size_t __count = 1, size_t __flags = MAP_WRITE | MAP_READ);
+void* virtual_allocate_at(uintptr_t at, size_t __count = 1, size_t flags = MAP_WRITE | MAP_READ);
 
 void virtual_free(void* __ptr, size_t __count = 1);
+void virtual_free_at(void* __ptr, size_t __count = 1);
 } // namespace memory
 
 #endif // MEMORY_VIRTUAL_HPP

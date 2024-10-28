@@ -180,6 +180,50 @@ void* virtual_allocate(size_t count, size_t flags)
 	return virtual_allocate(virtual_base, kernel_virtual_base, count, flags);
 }
 
+void* virtual_allocate_at(uintptr_t at, size_t count, size_t flags)
+{
+	PhysicalMemoryStats stats = {};
+	physical_get_status(&stats);
+
+	const size_t size = count * PAGE_SIZE;
+	uintptr_t start = to_higher_half(at);
+	uintptr_t end = kernel_address_request.response->virtual_base;
+	uintptr_t address = 0;
+	PageMap* pagemap = get_current_pagemap();
+
+	do
+	{
+		for(address = start; address < (start + size); address += PAGE_SIZE)
+		{
+			if(pagemap->virtual_to_entry(address, false, PAGE_SIZE, true)->is_valid())
+			{
+				// Found a valid page
+				break;
+			}
+		}
+
+		if(address >= (start + size))
+		{
+			for(size_t i = 0; i < size; i += PAGE_SIZE)
+			{
+				if(pagemap->map_page(start + i, at + i, flags))
+				{
+					goto failure;
+				}
+			}
+
+			pagemap->load();
+			return reinterpret_cast<void*>(start);
+		}
+
+		start += PAGE_SIZE;
+	} while(start < end);
+
+failure:
+	pagemap->load();
+	return nullptr;
+}
+
 void virtual_free(void* ptr, size_t count)
 {
 	uintptr_t address = reinterpret_cast<uintptr_t>(ptr);
@@ -198,6 +242,27 @@ void virtual_free(void* ptr, size_t count)
 
 		pagemap->unmap_page(address);
 		physical_free(reinterpret_cast<void*>(physical_address));
+		pagemap->load();
+	}
+}
+
+void virtual_free_at(void* ptr, size_t count)
+{
+	uintptr_t address = reinterpret_cast<uintptr_t>(ptr);
+	PageMap* pagemap = get_current_pagemap();
+
+	address = align_down(address, PAGE_SIZE);
+
+	for(size_t i = 0; i < count; i++)
+	{
+		uintptr_t physical_address = pagemap->virtual_to_physical(address);
+
+		if(physical_address == static_cast<size_t>(-1))
+		{
+			return;
+		}
+
+		pagemap->unmap_page(address);
 		pagemap->load();
 	}
 }

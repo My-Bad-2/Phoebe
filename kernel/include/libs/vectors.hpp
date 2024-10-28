@@ -1,21 +1,21 @@
 // Copied from libstdcxx's std::vector
 
-#include "logger.h"
 #ifndef LIBS_VECTORS_HPP
-	#define LIBS_VECTORS_HPP 1
+#define LIBS_VECTORS_HPP 1
 
-	#include <bits/stl_iterator_base_funcs.h>
-	#include <bits/concept_check.h>
-	#include <bits/functexcept.h>
-	#include <initializer_list>
-	#include <compare>
-	#include <debug/assertions.h>
-	#include <memory>
+#include <logger.h>
+#include <bits/stl_iterator_base_funcs.h>
+#include <bits/concept_check.h>
+#include <bits/functexcept.h>
+#include <initializer_list>
+#include <compare>
+#include <debug/assertions.h>
+#include <memory>
 
-	#if _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
+#if _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
 extern "C" void __sanitizer_annotate_contiguous_container(const void*, const void*, const void*,
 														  const void*);
-	#endif
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -40,7 +40,7 @@ struct _Vector_base
 		{
 		}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 		_GLIBCXX20_CONSTEXPR
 		_Vector_impl_data(_Vector_impl_data&& __x) noexcept :
 			_M_start(__x._M_start), _M_finish(__x._M_finish),
@@ -48,7 +48,7 @@ struct _Vector_base
 		{
 			__x._M_start = __x._M_finish = __x._M_end_of_storage = pointer();
 		}
-	#endif
+#endif
 
 		_GLIBCXX20_CONSTEXPR
 		void _M_copy_data(_Vector_impl_data const& __x) _GLIBCXX_NOEXCEPT
@@ -74,9 +74,9 @@ struct _Vector_base
 	{
 		_GLIBCXX20_CONSTEXPR
 		_Vector_impl() _GLIBCXX_NOEXCEPT_IF(is_nothrow_default_constructible<_Tp_alloc_type>::value)
-	#if __cpp_lib_concepts
+#if __cpp_lib_concepts
 			requires is_default_constructible_v<_Tp_alloc_type>
-	#endif
+#endif
 			: _Tp_alloc_type()
 		{
 		}
@@ -86,7 +86,7 @@ struct _Vector_base
 		{
 		}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 		// Not defaulted, to enforce noexcept(true) even when
 		// !is_nothrow_move_constructible<_Tp_alloc_type>.
 		_GLIBCXX20_CONSTEXPR
@@ -105,9 +105,9 @@ struct _Vector_base
 			_Tp_alloc_type(std::move(__a)), _Vector_impl_data(std::move(__rv))
 		{
 		}
-	#endif
+#endif
 
-	#if _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
+#if _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
 		template<typename = _Tp_alloc_type>
 		struct _Asan
 		{
@@ -144,10 +144,10 @@ struct _Vector_base
 			static _GLIBCXX20_CONSTEXPR void _S_adjust(_Vector_impl& __impl, pointer __prev,
 													   pointer __curr)
 			{
-		#if __cpp_lib_is_constant_evaluated
+	#if __cpp_lib_is_constant_evaluated
 				if(std::is_constant_evaluated())
 					return;
-		#endif
+	#endif
 				__sanitizer_annotate_contiguous_container(__impl._M_start, __impl._M_end_of_storage,
 														  __prev, __curr);
 			}
@@ -187,10 +187,10 @@ struct _Vector_base
 
 				_Vector_impl& _M_impl;
 
-		#if __cplusplus >= 201103L
+	#if __cplusplus >= 201103L
 				_Reinit(const _Reinit&) = delete;
 				_Reinit& operator=(const _Reinit&) = delete;
-		#endif
+	#endif
 			};
 
 			// Tell ASan when unused capacity is initialized to be valid.
@@ -215,34 +215,34 @@ struct _Vector_base
 					_M_n -= __n;
 				}
 
-		#if __cplusplus >= 201103L
+	#if __cplusplus >= 201103L
 				_Grow(const _Grow&) = delete;
 				_Grow& operator=(const _Grow&) = delete;
-		#endif
+	#endif
 			  private:
 				_Vector_impl& _M_impl;
 				size_type _M_n;
 			};
 		};
 
-		#define _GLIBCXX_ASAN_ANNOTATE_REINIT                             \
-			typename _Base::_Vector_impl::template _Asan<>::_Reinit const \
-				__attribute__((__unused__)) __reinit_guard(this->_M_impl)
-		#define _GLIBCXX_ASAN_ANNOTATE_GROW(n)                    \
-			typename _Base::_Vector_impl::template _Asan<>::_Grow \
-				__attribute__((__unused__)) __grow_guard(this->_M_impl, (n))
-		#define _GLIBCXX_ASAN_ANNOTATE_GREW(n) __grow_guard._M_grew(n)
-		#define _GLIBCXX_ASAN_ANNOTATE_SHRINK(n) \
-			_Base::_Vector_impl::template _Asan<>::_S_shrink(this->_M_impl, n)
-		#define _GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC \
-			_Base::_Vector_impl::template _Asan<>::_S_on_dealloc(this->_M_impl)
-	#else // ! (_GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR)
-		#define _GLIBCXX_ASAN_ANNOTATE_REINIT
-		#define _GLIBCXX_ASAN_ANNOTATE_GROW(n)
-		#define _GLIBCXX_ASAN_ANNOTATE_GREW(n)
-		#define _GLIBCXX_ASAN_ANNOTATE_SHRINK(n)
-		#define _GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC
-	#endif // _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
+	#define _GLIBCXX_ASAN_ANNOTATE_REINIT                             \
+		typename _Base::_Vector_impl::template _Asan<>::_Reinit const \
+			__attribute__((__unused__)) __reinit_guard(this->_M_impl)
+	#define _GLIBCXX_ASAN_ANNOTATE_GROW(n)                    \
+		typename _Base::_Vector_impl::template _Asan<>::_Grow \
+			__attribute__((__unused__)) __grow_guard(this->_M_impl, (n))
+	#define _GLIBCXX_ASAN_ANNOTATE_GREW(n) __grow_guard._M_grew(n)
+	#define _GLIBCXX_ASAN_ANNOTATE_SHRINK(n) \
+		_Base::_Vector_impl::template _Asan<>::_S_shrink(this->_M_impl, n)
+	#define _GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC \
+		_Base::_Vector_impl::template _Asan<>::_S_on_dealloc(this->_M_impl)
+#else // ! (_GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR)
+	#define _GLIBCXX_ASAN_ANNOTATE_REINIT
+	#define _GLIBCXX_ASAN_ANNOTATE_GROW(n)
+	#define _GLIBCXX_ASAN_ANNOTATE_GREW(n)
+	#define _GLIBCXX_ASAN_ANNOTATE_SHRINK(n)
+	#define _GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC
+#endif // _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
 	};
 
   public:
@@ -266,27 +266,27 @@ struct _Vector_base
 		return allocator_type(_M_get_Tp_allocator());
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	_Vector_base() = default;
-	#else
+#else
 	_Vector_base()
 	{
 	}
-	#endif
+#endif
 
 	_GLIBCXX20_CONSTEXPR
 	_Vector_base(const allocator_type& __a) _GLIBCXX_NOEXCEPT : _M_impl(__a)
 	{
 	}
 
-	// Kept for ABI compatibility.
-	#if !_GLIBCXX_INLINE_VERSION
+// Kept for ABI compatibility.
+#if !_GLIBCXX_INLINE_VERSION
 	_GLIBCXX20_CONSTEXPR
 	_Vector_base(size_t __n) : _M_impl()
 	{
 		_M_create_storage(__n);
 	}
-	#endif
+#endif
 
 	_GLIBCXX20_CONSTEXPR
 	_Vector_base(size_t __n, const allocator_type& __a) : _M_impl(__a)
@@ -294,11 +294,11 @@ struct _Vector_base
 		_M_create_storage(__n);
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	_Vector_base(_Vector_base&&) = default;
 
-		// Kept for ABI compatibility.
-		#if !_GLIBCXX_INLINE_VERSION
+	// Kept for ABI compatibility.
+	#if !_GLIBCXX_INLINE_VERSION
 	_GLIBCXX20_CONSTEXPR
 	_Vector_base(_Tp_alloc_type&& __a) noexcept : _M_impl(std::move(__a))
 	{
@@ -315,14 +315,14 @@ struct _Vector_base
 			_M_create_storage(__n);
 		}
 	}
-		#endif
+	#endif
 
 	_GLIBCXX20_CONSTEXPR
 	_Vector_base(const allocator_type& __a, _Vector_base&& __x) :
 		_M_impl(_Tp_alloc_type(__a), std::move(__x._M_impl))
 	{
 	}
-	#endif
+#endif
 
 	_GLIBCXX20_CONSTEXPR
 	~_Vector_base() _GLIBCXX_NOEXCEPT
@@ -384,23 +384,23 @@ struct _Vector_base
 template<typename _Tp, typename _Alloc = std::allocator<_Tp>>
 class vector : protected _Vector_base<_Tp, _Alloc>
 {
-	#ifdef _GLIBCXX_CONCEPT_CHECKS
+#ifdef _GLIBCXX_CONCEPT_CHECKS
 	// Concept requirements.
 	typedef typename _Alloc::value_type _Alloc_value_type;
-		#if __cplusplus < 201103L
+	#if __cplusplus < 201103L
 	__glibcxx_class_requires(_Tp, _SGIAssignableConcept)
-		#endif
-		__glibcxx_class_requires2(_Tp, _Alloc_value_type, _SameTypeConcept)
 	#endif
+		__glibcxx_class_requires2(_Tp, _Alloc_value_type, _SameTypeConcept)
+#endif
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 			static_assert(is_same<typename remove_cv<_Tp>::type, _Tp>::value,
 						  "std::vector must have a non-const, non-volatile value_type");
-		#if __cplusplus > 201703L || defined __STRICT_ANSI__
+	#if __cplusplus > 201703L || defined __STRICT_ANSI__
 	static_assert(is_same<typename _Alloc::value_type, _Tp>::value,
 				  "std::vector must have the same value_type as its allocator");
-		#endif
 	#endif
+#endif
 
 	typedef _Vector_base<_Tp, _Alloc> _Base;
 	typedef typename _Base::_Tp_alloc_type _Tp_alloc_type;
@@ -421,7 +421,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	typedef _Alloc allocator_type;
 
   private:
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	static constexpr bool _S_nothrow_relocate(true_type)
 	{
 		return noexcept(std::__relocate_a(std::declval<pointer>(), std::declval<pointer>(),
@@ -458,15 +458,15 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 													pointer __result,
 													_Tp_alloc_type& __alloc) noexcept
 	{
-		#if __cpp_if_constexpr
+	#if __cpp_if_constexpr
 		// All callers have already checked _S_use_relocate() so just do it.
 		return std::__relocate_a(__first, __last, __result, __alloc);
-		#else
+	#else
 		using __do_it = __bool_constant<_S_use_relocate()>;
 		return _S_do_relocate(__first, __last, __result, __alloc, __do_it{});
-		#endif
+	#endif
 	}
-	#endif // C++11
+#endif // C++11
 
   protected:
 	using _Base::_M_allocate;
@@ -475,19 +475,19 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	using _Base::_M_impl;
 
   public:
-	// [23.2.4.1] construct/copy/destroy
-	// (assign() and get_allocator() are also listed in this section)
+// [23.2.4.1] construct/copy/destroy
+// (assign() and get_allocator() are also listed in this section)
 
-	/**
-	 *  @brief  Creates a %vector with no elements.
-	 */
-	#if __cplusplus >= 201103L
+/**
+ *  @brief  Creates a %vector with no elements.
+ */
+#if __cplusplus >= 201103L
 	vector() = default;
-	#else
+#else
 	vector()
 	{
 	}
-	#endif
+#endif
 
 	/**
 	 *  @brief  Creates a %vector with no elements.
@@ -497,7 +497,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  Creates a %vector with default constructed elements.
 	 *  @param  __n  The number of elements to initially create.
@@ -527,7 +527,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		_M_fill_initialize(__n, __value);
 	}
-	#else
+#else
 	/**
 	 *  @brief  Creates a %vector with copies of an exemplar element.
 	 *  @param  __n  The number of elements to initially create.
@@ -542,7 +542,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		_M_fill_initialize(__n, __value);
 	}
-	#endif
+#endif
 
 	/**
 	 *  @brief  %Vector copy constructor.
@@ -563,7 +563,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 			__x.begin(), __x.end(), this->_M_impl._M_start, _M_get_Tp_allocator());
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  %Vector move constructor.
 	 *
@@ -630,32 +630,32 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		_M_range_initialize(__l.begin(), __l.end(), random_access_iterator_tag());
 	}
-	#endif
+#endif
 
-	/**
-	 *  @brief  Builds a %vector from a range.
-	 *  @param  __first  An input iterator.
-	 *  @param  __last  An input iterator.
-	 *  @param  __a  An allocator.
-	 *
-	 *  Create a %vector consisting of copies of the elements from
-	 *  [first,last).
-	 *
-	 *  If the iterators are forward, bidirectional, or
-	 *  random-access, then this will call the elements' copy
-	 *  constructor N times (where N is distance(first,last)) and do
-	 *  no memory reallocation.  But if only input iterators are
-	 *  used, then this will do at most 2N calls to the copy
-	 *  constructor, and logN memory reallocations.
-	 */
-	#if __cplusplus >= 201103L
+/**
+ *  @brief  Builds a %vector from a range.
+ *  @param  __first  An input iterator.
+ *  @param  __last  An input iterator.
+ *  @param  __a  An allocator.
+ *
+ *  Create a %vector consisting of copies of the elements from
+ *  [first,last).
+ *
+ *  If the iterators are forward, bidirectional, or
+ *  random-access, then this will call the elements' copy
+ *  constructor N times (where N is distance(first,last)) and do
+ *  no memory reallocation.  But if only input iterators are
+ *  used, then this will do at most 2N calls to the copy
+ *  constructor, and logN memory reallocations.
+ */
+#if __cplusplus >= 201103L
 	template<typename _InputIterator, typename = std::_RequireInputIter<_InputIterator>>
 	_GLIBCXX20_CONSTEXPR vector(_InputIterator __first, _InputIterator __last,
 								const allocator_type& __a = allocator_type()) : _Base(__a)
 	{
 		_M_range_initialize(__first, __last, std::__iterator_category(__first));
 	}
-	#else
+#else
 	template<typename _InputIterator>
 	vector(_InputIterator __first, _InputIterator __last,
 		   const allocator_type& __a = allocator_type()) : _Base(__a)
@@ -664,7 +664,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		typedef typename std::__is_integer<_InputIterator>::__type _Integral;
 		_M_initialize_dispatch(__first, __last, _Integral());
 	}
-	#endif
+#endif
 
 	/**
 	 *  The dtor only erases the elements, and note that if the
@@ -691,7 +691,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	_GLIBCXX20_CONSTEXPR
 	vector& operator=(const vector& __x);
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  %Vector move assignment operator.
 	 *  @param  __x  A %vector of identical element and allocator types.
@@ -728,7 +728,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		this->_M_assign_aux(__l.begin(), __l.end(), random_access_iterator_tag());
 		return *this;
 	}
-	#endif
+#endif
 
 	/**
 	 *  @brief  Assigns a given value to a %vector.
@@ -746,25 +746,25 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		_M_fill_assign(__n, __val);
 	}
 
-	/**
-	 *  @brief  Assigns a range to a %vector.
-	 *  @param  __first  An input iterator.
-	 *  @param  __last   An input iterator.
-	 *
-	 *  This function fills a %vector with copies of the elements in the
-	 *  range [__first,__last).
-	 *
-	 *  Note that the assignment completely changes the %vector and
-	 *  that the resulting %vector's size is the same as the number
-	 *  of elements assigned.
-	 */
-	#if __cplusplus >= 201103L
+/**
+ *  @brief  Assigns a range to a %vector.
+ *  @param  __first  An input iterator.
+ *  @param  __last   An input iterator.
+ *
+ *  This function fills a %vector with copies of the elements in the
+ *  range [__first,__last).
+ *
+ *  Note that the assignment completely changes the %vector and
+ *  that the resulting %vector's size is the same as the number
+ *  of elements assigned.
+ */
+#if __cplusplus >= 201103L
 	template<typename _InputIterator, typename = std::_RequireInputIter<_InputIterator>>
 	_GLIBCXX20_CONSTEXPR void assign(_InputIterator __first, _InputIterator __last)
 	{
 		_M_assign_aux(__first, __last, std::__iterator_category(__first));
 	}
-	#else
+#else
 	template<typename _InputIterator>
 	void assign(_InputIterator __first, _InputIterator __last)
 	{
@@ -772,9 +772,9 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		typedef typename std::__is_integer<_InputIterator>::__type _Integral;
 		_M_assign_dispatch(__first, __last, _Integral());
 	}
-	#endif
+#endif
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  Assigns an initializer list to a %vector.
 	 *  @param  __l  An initializer_list.
@@ -791,7 +791,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		this->_M_assign_aux(__l.begin(), __l.end(), random_access_iterator_tag());
 	}
-	#endif
+#endif
 
 	/// Get a copy of the memory allocation object.
 	using _Base::get_allocator;
@@ -877,7 +877,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		return const_reverse_iterator(begin());
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  Returns a read-only (constant) iterator that points to the
 	 *  first element in the %vector.  Iteration is done in ordinary
@@ -917,7 +917,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		return const_reverse_iterator(begin());
 	}
-	#endif
+#endif
 
 	// [23.2.4.2] capacity
 	/**  Returns the number of elements in the %vector.  */
@@ -932,7 +932,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		return _S_max_size(_M_get_Tp_allocator());
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  Resizes the %vector to the specified number of elements.
 	 *  @param  __new_size  Number of elements the %vector should contain.
@@ -970,7 +970,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		else if(__new_size < size())
 			_M_erase_at_end(this->_M_impl._M_start + __new_size);
 	}
-	#else
+#else
 	/**
 	 *  @brief  Resizes the %vector to the specified number of elements.
 	 *  @param  __new_size  Number of elements the %vector should contain.
@@ -990,16 +990,16 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		else if(__new_size < size())
 			_M_erase_at_end(this->_M_impl._M_start + __new_size);
 	}
-	#endif
+#endif
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**  A non-binding request to reduce capacity() to size().  */
 	_GLIBCXX20_CONSTEXPR
 	void shrink_to_fit()
 	{
 		_M_shrink_to_fit();
 	}
-	#endif
+#endif
 
 	/**
 	 *  Returns the total number of elements that the %vector can
@@ -1204,7 +1204,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 			_M_realloc_append(__x);
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	_GLIBCXX20_CONSTEXPR
 	void push_back(value_type&& __x)
 	{
@@ -1212,13 +1212,13 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	}
 
 	template<typename... _Args>
-		#if __cplusplus > 201402L
+	#if __cplusplus > 201402L
 	_GLIBCXX20_CONSTEXPR reference
-		#else
+	#else
 	void
-		#endif
-		emplace_back(_Args&&... __args);
 	#endif
+		emplace_back(_Args&&... __args);
+#endif
 
 	/**
 	 *  @brief  Removes last element.
@@ -1238,7 +1238,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		_GLIBCXX_ASAN_ANNOTATE_SHRINK(1);
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  Inserts an object in %vector before specified iterator.
 	 *  @param  __position  A const_iterator into the %vector.
@@ -1270,7 +1270,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	 */
 	_GLIBCXX20_CONSTEXPR
 	iterator insert(const_iterator __position, const value_type& __x);
-	#else
+#else
 	/**
 	 *  @brief  Inserts given value into %vector before specified iterator.
 	 *  @param  __position  An iterator into the %vector.
@@ -1283,9 +1283,9 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	 *  used the user should consider using std::list.
 	 */
 	iterator insert(iterator __position, const value_type& __x);
-	#endif
+#endif
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  Inserts given rvalue into %vector before specified iterator.
 	 *  @param  __position  A const_iterator into the %vector.
@@ -1324,9 +1324,9 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 						std::random_access_iterator_tag());
 		return begin() + __offset;
 	}
-	#endif
+#endif
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  Inserts a number of copies of given data into the %vector.
 	 *  @param  __position  A const_iterator into the %vector.
@@ -1348,7 +1348,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		_M_fill_insert(begin() + __offset, __n, __x);
 		return begin() + __offset;
 	}
-	#else
+#else
 	/**
 	 *  @brief  Inserts a number of copies of given data into the %vector.
 	 *  @param  __position  An iterator into the %vector.
@@ -1366,9 +1366,9 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		_M_fill_insert(__position, __n, __x);
 	}
-	#endif
+#endif
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	/**
 	 *  @brief  Inserts a range into the %vector.
 	 *  @param  __position  A const_iterator into the %vector.
@@ -1392,7 +1392,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		_M_range_insert(begin() + __offset, __first, __last, std::__iterator_category(__first));
 		return begin() + __offset;
 	}
-	#else
+#else
 	/**
 	 *  @brief  Inserts a range into the %vector.
 	 *  @param  __position  An iterator into the %vector.
@@ -1414,7 +1414,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		typedef typename std::__is_integer<_InputIterator>::__type _Integral;
 		_M_insert_dispatch(__position, __first, __last, _Integral());
 	}
-	#endif
+#endif
 
 	/**
 	 *  @brief  Remove element at given position.
@@ -1433,17 +1433,17 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	 */
 	_GLIBCXX20_CONSTEXPR
 	iterator
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 		erase(const_iterator __position)
 	{
 		return _M_erase(begin() + (__position - cbegin()));
 	}
-	#else
+#else
 		erase(iterator __position)
 	{
 		return _M_erase(__position);
 	}
-	#endif
+#endif
 
 	/**
 	 *  @brief  Remove a range of elements.
@@ -1465,19 +1465,19 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	 */
 	_GLIBCXX20_CONSTEXPR
 	iterator
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 		erase(const_iterator __first, const_iterator __last)
 	{
 		const auto __beg = begin();
 		const auto __cbeg = cbegin();
 		return _M_erase(__beg + (__first - __cbeg), __beg + (__last - __cbeg));
 	}
-	#else
+#else
 		erase(iterator __first, iterator __last)
 	{
 		return _M_erase(__first, __last);
 	}
-	#endif
+#endif
 
 	/**
 	 *  @brief  Swaps data with another %vector.
@@ -1493,10 +1493,10 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	_GLIBCXX20_CONSTEXPR
 	void swap(vector& __x) _GLIBCXX_NOEXCEPT
 	{
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 		__glibcxx_assert(_Alloc_traits::propagate_on_container_swap::value ||
 						 _M_get_Tp_allocator() == __x._M_get_Tp_allocator());
-	#endif
+#endif
 		this->_M_impl._M_swap_data(__x._M_impl);
 		_Alloc_traits::_S_on_swap(_M_get_Tp_allocator(), __x._M_get_Tp_allocator());
 	}
@@ -1564,7 +1564,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 
 	// Called by the range constructor to implement [23.1.1]/9
 
-	#if __cplusplus < 201103L
+#if __cplusplus < 201103L
 	// _GLIBCXX_RESOLVE_LIB_DEFECTS
 	// 438. Ambiguity in the "do the right thing" clause
 	template<typename _Integer>
@@ -1583,7 +1583,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		_M_range_initialize(__first, __last, std::__iterator_category(__first));
 	}
-	#endif
+#endif
 
 	// Called by the second initialize_dispatch above
 	template<typename _InputIterator>
@@ -1593,11 +1593,11 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		__try
 		{
 			for(; __first != __last; ++__first)
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 				emplace_back(*__first);
-	#else
+#else
 				push_back(*__first);
-	#endif
+#endif
 		}
 		__catch(...)
 		{
@@ -1630,7 +1630,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 																__value, _M_get_Tp_allocator());
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	// Called by the vector(n) constructor.
 	_GLIBCXX20_CONSTEXPR
 	void _M_default_initialize(size_type __n)
@@ -1638,7 +1638,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		this->_M_impl._M_finish =
 			std::__uninitialized_default_n_a(this->_M_impl._M_start, __n, _M_get_Tp_allocator());
 	}
-	#endif
+#endif
 
 	// Internal assign functions follow.  The *_aux functions do the actual
 	// assignment work for the range versions.
@@ -1712,23 +1712,23 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	_GLIBCXX20_CONSTEXPR
 	void _M_fill_insert(iterator __pos, size_type __n, const value_type& __x);
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	// Called by resize(n).
 	_GLIBCXX20_CONSTEXPR
 	void _M_default_append(size_type __n);
 
 	_GLIBCXX20_CONSTEXPR
 	bool _M_shrink_to_fit();
-	#endif
+#endif
 
-	#if __cplusplus < 201103L
+#if __cplusplus < 201103L
 	// Called by insert(p,x)
 	void _M_insert_aux(iterator __position, const value_type& __x);
 
 	void _M_realloc_insert(iterator __position, const value_type& __x);
 
 	void _M_realloc_append(const value_type& __x);
-	#else
+#else
 	// A value_type object constructed with _Alloc_traits::construct()
 	// and destroyed with _Alloc_traits::destroy().
 	struct _Temporary_value
@@ -1799,7 +1799,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		return _M_insert_rval(__position, std::move(__v));
 	}
-	#endif
+#endif
 
 	// Called by _M_fill_insert, _M_insert_aux etc.
 	_GLIBCXX20_CONSTEXPR
@@ -1852,7 +1852,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	_GLIBCXX20_CONSTEXPR
 	iterator _M_erase(iterator __first, iterator __last);
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
   private:
 	// Constant-time move assignment when source object's memory can be
 	// moved, either because the source's allocator will move too
@@ -1883,7 +1883,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 			__x.clear();
 		}
 	}
-	#endif
+#endif
 
 	template<typename _Up>
 	_GLIBCXX20_CONSTEXPR _Up* _M_data_ptr(_Up* __ptr) const _GLIBCXX_NOEXCEPT
@@ -1891,14 +1891,14 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 		return __ptr;
 	}
 
-	#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
 	template<typename _Ptr>
 	_GLIBCXX20_CONSTEXPR typename std::pointer_traits<_Ptr>::element_type*
 		_M_data_ptr(_Ptr __ptr) const
 	{
 		return empty() ? nullptr : std::__to_address(__ptr);
 	}
-	#else
+#else
 	template<typename _Up>
 	_Up* _M_data_ptr(_Up* __ptr) _GLIBCXX_NOEXCEPT
 	{
@@ -1916,16 +1916,16 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 	{
 		return empty() ? (const value_type*)0 : __ptr.operator->();
 	}
-	#endif
+#endif
 };
 
-	#if __cpp_deduction_guides >= 201606
+#if __cpp_deduction_guides >= 201606
 template<typename _InputIterator,
 		 typename _ValT = typename iterator_traits<_InputIterator>::value_type,
 		 typename _Allocator = allocator<_ValT>, typename = _RequireInputIter<_InputIterator>,
 		 typename = _RequireAllocator<_Allocator>>
 vector(_InputIterator, _InputIterator, _Allocator = _Allocator()) -> vector<_ValT, _Allocator>;
-	#endif
+#endif
 
 /**
  *  @brief  Vector equality comparison.
@@ -1944,7 +1944,7 @@ _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR inline bool operator==(const vector<_Tp,
 	return (__x.size() == __y.size() && std::equal(__x.begin(), __x.end(), __y.begin()));
 }
 
-	#if __cpp_lib_three_way_comparison // >= C++20
+#if __cpp_lib_three_way_comparison // >= C++20
 /**
  *  @brief  Vector ordering relation.
  *  @param  __x  A `vector`.
@@ -1964,7 +1964,7 @@ constexpr __detail::__synth3way_t<_Tp> operator<=>(const vector<_Tp, _Alloc>& __
 	return std::lexicographical_compare_three_way(__x.begin(), __x.end(), __y.begin(), __y.end(),
 												  __detail::__synth3way);
 }
-	#else
+#else
 /**
  *  @brief  Vector ordering relation.
  *  @param  __x  A %vector.
@@ -2014,7 +2014,7 @@ _GLIBCXX_NODISCARD inline bool operator>=(const vector<_Tp, _Alloc>& __x,
 {
 	return !(__x < __y);
 }
-	#endif // three-way comparison
+#endif // three-way comparison
 
 /// See std::vector::swap().
 template<typename _Tp, typename _Alloc>
@@ -2026,7 +2026,7 @@ _GLIBCXX20_CONSTEXPR inline void swap(vector<_Tp, _Alloc>& __x, vector<_Tp, _All
 
 _GLIBCXX_END_NAMESPACE_CONTAINER
 
-	#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L
 namespace __detail::__variant
 {
 template<typename>
@@ -2040,7 +2040,7 @@ struct _Never_valueless_alt<_GLIBCXX_STD_C::vector<_Tp, _Alloc>> :
 {
 };
 } // namespace __detail::__variant
-	#endif // C++17
+#endif // C++17
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std _GLIBCXX_VISIBILITY(default)
