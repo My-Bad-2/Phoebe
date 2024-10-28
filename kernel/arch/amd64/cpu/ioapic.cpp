@@ -70,6 +70,13 @@ lock::InterruptLock io_apic_lock;
 std::array<IoApicIsaOverride, NUM_ISA_IRQS> isa_overrides;
 std::vector<IoApic> io_apics;
 
+bool ioapic_initialized = false;
+
+bool io_apic_initialized()
+{
+	return ioapic_initialized;
+}
+
 IoApic* resolve_global_irq_unsafe(uint32_t irq)
 {
 	for(size_t i = 0; i < io_apics.size(); ++i)
@@ -534,6 +541,8 @@ void initialize_ioapic()
 		log_debug("ISA IRQ override for ISA IRQ %u, mapping to %u", isa_irq,
 				  isa_overrides[i].global_irq);
 	}
+
+	ioapic_initialized = true;
 }
 } // namespace apic
 } // namespace cpu

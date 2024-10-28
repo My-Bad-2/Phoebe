@@ -15,6 +15,10 @@ namespace acpi
 {
 acpi_madt* madt_header = nullptr;
 
+bool legacy_pic() {
+	return madt_header && madt_header->flags & 1;
+}
+
 void initialize_madt()
 {
 	uacpi_table out_table = {};

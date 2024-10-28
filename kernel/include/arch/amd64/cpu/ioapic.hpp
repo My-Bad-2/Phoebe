@@ -82,6 +82,8 @@ GsiRange get_gsi_range();
 
 void save_io_apic();
 void restore_io_apic();
+
+bool io_apic_initialized();
 } // namespace apic
 } // namespace cpu
 

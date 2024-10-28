@@ -15,6 +15,7 @@ void get_interrupt_overrides(std::vector<acpi_madt_interrupt_source_override>& _
 void get_local_apic(std::vector<acpi_madt_lapic>& __lapics);
 
 acpi_fadt* get_fadt();
+bool legacy_pic();
 
 void initialize();
 void initialize_madt();
