@@ -74,6 +74,8 @@ __NO_RETURN inline void halt(bool interrupts = true)
 	}
 }
 
+bool interrupt_status();
+
 void initialize();
 } // namespace arch
 

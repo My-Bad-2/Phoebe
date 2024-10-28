@@ -118,6 +118,36 @@ inline void fxrstor(uint8_t* region)
 	asm volatile("fxrstorq (%0)" ::"r"(region), "a"(RFBM_LOW), "d"(RFBM_HIGH) : "memory");
 }
 
+inline uintptr_t kernel_gs_base()
+{
+	return read_msr(MSR_KERNEL_GS_BASE);
+}
+
+inline uintptr_t fs_base()
+{
+	return read_msr(MSR_FS_BASE);
+}
+
+inline uintptr_t gs_base()
+{
+	return read_msr(MSR_GS_BASE);
+}
+
+inline void set_fs_base(uintptr_t addr)
+{
+	write_msr(MSR_FS_BASE, addr);
+}
+
+inline void set_gs_base(uintptr_t addr)
+{
+	write_msr(MSR_GS_BASE, addr);
+}
+
+inline void set_kernel_gs_base(uintptr_t addr)
+{
+	write_msr(MSR_KERNEL_GS_BASE, addr);
+}
+
 void initialize();
 } // namespace cpu
 

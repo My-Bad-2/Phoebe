@@ -1,4 +1,3 @@
-#include "logger.h"
 #include <arch.hpp>
 #include <cpu/idt.hpp>
 #include <drivers/interrupts.hpp>
@@ -115,7 +114,7 @@ void initialize_pit()
 {
 	const uint32_t desired_freq = 1000;
 
-    log_begin_intialization("Programmable Interval Timer");
+	log_begin_intialization("Programmable Interval Timer");
 
 	set_pit_freq(desired_freq);
 	auto [handler, vector] = drivers::interrupts::allocate_handler(IRQ_SYSTEM_TIMER);
@@ -126,7 +125,7 @@ void initialize_pit()
 
 	drivers::interrupts::clear_interrupt_mask(vector);
 
-    log_end_intialization();
+	log_end_intialization();
 }
 
 void pit_sleep(uint32_t msec)
@@ -137,6 +136,16 @@ void pit_sleep(uint32_t msec)
 	{
 		pause();
 	}
+}
+
+size_t get_time()
+{
+	return pit_ticks;
+}
+
+void sleep(size_t ms)
+{
+	return pit_sleep(ms);
 }
 } // namespace timers
 } // namespace drivers

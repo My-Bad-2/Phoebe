@@ -86,6 +86,11 @@ class PageMap
 		return this->top_lvl_;
 	}
 
+	constexpr void set_table(PageTable* table)
+	{
+		this->top_lvl_ = table;
+	}
+
 	void initialize(bool __kernel_pagemap = false);
 
 	void* get_next_lvl(PageTableEntry& __entry, bool __allocate, uintptr_t __virtual_address = -1,

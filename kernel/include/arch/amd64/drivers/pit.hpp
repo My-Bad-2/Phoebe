@@ -2,6 +2,7 @@
 #define DRIVERS_PIT_HPP 1
 
 #include <stdint.h>
+#include <drivers/timers.hpp>
 
 namespace drivers
 {

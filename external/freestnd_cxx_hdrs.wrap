@@ -2,6 +2,7 @@
 url = https://github.com/osdev0/freestnd-cxx-hdrs.git
 revision = trunk
 depth = 1
+patch_directory = freestnd_cxx_hdrs
 
 [provide]
 freestnd_cxx_hdrs = freestnd_cxx_hdrs_dep

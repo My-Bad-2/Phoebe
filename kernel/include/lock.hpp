@@ -65,6 +65,55 @@ class TicketLock
 
 using mutex = TicketLock;
 
+struct InterruptLock
+{
+  public:
+	constexpr InterruptLock() : interrupts_(false), lock_()
+	{
+	}
+
+	InterruptLock(const InterruptLock&) = delete;
+	InterruptLock& operator=(const InterruptLock&) = delete;
+
+	void lock()
+	{
+		this->interrupts_ = arch::interrupt_status();
+		disable_interrupts();
+
+		this->lock_.lock();
+	}
+
+	void unlock()
+	{
+		this->lock_.unlock();
+
+		if(this->interrupts_)
+		{
+			enable_interrupts();
+		}
+	}
+
+	bool is_locked()
+	{
+		return this->lock_.is_locked();
+	}
+
+	bool try_lock()
+	{
+		if(this->is_locked())
+		{
+			return false;
+		}
+
+		this->lock();
+		return true;
+	}
+
+  private:
+	bool interrupts_;
+	mutex lock_;
+};
+
 struct DeferLock
 {
 	explicit DeferLock() = default;

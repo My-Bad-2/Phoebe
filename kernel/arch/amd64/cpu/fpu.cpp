@@ -1,3 +1,4 @@
+#include "memory/memory.hpp"
 #include <stdlib.h>
 #include <logger.h>
 
@@ -7,6 +8,8 @@
 #include <cpu/registers.h>
 
 #include <libs/function.hpp>
+
+#include <memory/virtual.hpp>
 
 namespace cpu
 {
@@ -56,6 +59,18 @@ struct FpuFeatures
 	size_t storage_size;
 } fpu_features;
 
+void* allocate_fpu_buffer()
+{
+	const size_t fpu_pages = memory::div_roundup(fpu_features.storage_size, PAGE_SIZE);
+	return memory::virtual_allocate(fpu_pages);
+}
+
+void free_fpu_buffer(void* buffer)
+{
+	const size_t fpu_pages = memory::div_roundup(fpu_features.storage_size, PAGE_SIZE);
+	memory::virtual_free(buffer, fpu_pages);
+}
+
 void initialize_sse()
 {
 	uintptr_t cr0 = read_cr0();
@@ -83,7 +98,7 @@ void initialize_sse()
 
 	// Initialize SSE
 	uint32_t cr4 = read_cr4();
-	
+
 	// Support SIMD FPU Exceptions
 	cr4 |= CR4_OSXMMEXPT;
 	// Support fxsave and fxrstor instructions
