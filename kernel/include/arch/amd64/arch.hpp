@@ -77,6 +77,7 @@ __NO_RETURN inline void halt(bool interrupts = true)
 bool interrupt_status();
 
 void initialize();
+void late_initialize();
 } // namespace arch
 
 #endif // ARCH_HPP

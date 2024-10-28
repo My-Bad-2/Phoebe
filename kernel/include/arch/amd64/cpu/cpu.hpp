@@ -149,6 +149,7 @@ inline void set_kernel_gs_base(uintptr_t addr)
 }
 
 void initialize();
+void late_initialize();
 } // namespace cpu
 
 #endif // CPU_CPU_HPP

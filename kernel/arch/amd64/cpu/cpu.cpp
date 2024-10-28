@@ -4,6 +4,7 @@
 #include <cpu/cpu.hpp>
 #include <cpu/idt.hpp>
 #include <cpu/fpu.hpp>
+#include <cpu/ioapic.hpp>
 
 namespace cpu
 {
@@ -15,6 +16,12 @@ void initialize()
 	interrupts::initialize();
 	fpu::initialize();
 
+	enable_interrupts();
+}
+
+void late_initialize() {
+	disable_interrupts();
+	apic::initialize_ioapic();
 	enable_interrupts();
 }
 } // namespace cpu

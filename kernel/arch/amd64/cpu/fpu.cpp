@@ -188,8 +188,6 @@ void initialize()
 
 		read_cpuid(&leaf, CPUID_XSAVE, 0);
 
-		log_debug("XSAVE size = %u", leaf.values[2]);
-
 		fpu_features.storage_size = leaf.values[2];
 	}
 	else

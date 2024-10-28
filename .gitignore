@@ -88,7 +88,7 @@ build/
 .cache/
 .vscode/
 
-external/limine/
-external/ovmf_binaries/
-external/freestnd_cxx_hdrs/
-external/uacpi/
+./external/limine/
+./external/uacpi/
+./external/ovmf_binaries/
+./external/freestnd_cxx_hdrs/

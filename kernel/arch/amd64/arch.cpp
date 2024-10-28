@@ -3,7 +3,8 @@
 
 namespace arch
 {
-bool interrupt_status() {
+bool interrupt_status()
+{
 	uint64_t rflags = 0;
 
 	asm volatile("pushfq");
@@ -15,5 +16,10 @@ bool interrupt_status() {
 void initialize()
 {
 	cpu::initialize();
+}
+
+void late_initialize()
+{
+	cpu::late_initialize();
 }
 } // namespace arch

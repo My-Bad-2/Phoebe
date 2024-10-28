@@ -12,6 +12,7 @@ namespace acpi
 {
 void get_io_apic(std::vector<acpi_madt_ioapic>& __ioapics);
 void get_interrupt_overrides(std::vector<acpi_madt_interrupt_source_override>& __overrides);
+void get_local_apic(std::vector<acpi_madt_lapic>& __lapics);
 
 acpi_fadt* get_fadt();
 
