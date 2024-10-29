@@ -1,3 +1,4 @@
+#include "cpu/lapic.hpp"
 #include <arch.hpp>
 
 #include <cpu/gdt.hpp>
@@ -19,9 +20,15 @@ void initialize()
 	enable_interrupts();
 }
 
-void late_initialize() {
+void late_initialize()
+{
 	disable_interrupts();
+	
 	apic::initialize_ioapic();
+
+	apic::initialize_lapic_virt();
+	apic::initialize_lapic();
+	
 	enable_interrupts();
 }
 } // namespace cpu

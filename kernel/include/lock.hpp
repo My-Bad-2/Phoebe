@@ -90,6 +90,11 @@ struct InterruptLock
 
 	void lock()
 	{
+		if(this->is_locked())
+		{
+			return;
+		}
+
 		this->interrupts_ = arch::interrupt_status();
 		disable_interrupts();
 

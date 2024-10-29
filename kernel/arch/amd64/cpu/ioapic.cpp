@@ -1,16 +1,19 @@
-#include "drivers/acpi.hpp"
-#include "drivers/interrupts.hpp"
-#include "libs/mmio.hpp"
-#include "lock.hpp"
-#include "logger.h"
-#include "memory/memory.hpp"
-#include "memory/virtual.hpp"
-#include "uacpi/acpi.h"
-#include <array>
 #include <assert.h>
-#include <cpu/ioapic.hpp>
+
+#include <lock.hpp>
+
+#include <drivers/acpi.hpp>
+
+#include <libs/mmio.hpp>
 #include <libs/vectors.hpp>
+
+#include <cpu/ioapic.hpp>
 #include <cpu/idt.hpp>
+
+#include <memory/memory.hpp>
+#include <memory/virtual.hpp>
+
+#include <array>
 #include <limits>
 
 #define IO_APIC_IND(base) ((volatile uint32_t*)(((uint8_t*)(base)) + IO_APIC_IOREGSEL))
@@ -108,8 +111,8 @@ IoApic* resolve_global_irq(uint32_t irq)
 
 uint32_t read_reg(IoApic* io_apic, uint8_t reg)
 {
-	// lock::ScopedLock guard(io_apic_lock);
 	assert(io_apic != nullptr);
+	lock::ScopedLock guard(io_apic_lock);
 
 	mmio_out(IO_APIC_IND(io_apic->virtual_addr), reg);
 	uint32_t val = mmio_in<uint32_t>(IO_APIC_DAT(io_apic->virtual_addr));
@@ -120,6 +123,7 @@ uint32_t read_reg(IoApic* io_apic, uint8_t reg)
 void write_reg(IoApic* io_apic, uint8_t reg, uint32_t val)
 {
 	assert(io_apic != nullptr);
+	lock::ScopedLock guard(io_apic_lock);
 
 	mmio_out(IO_APIC_IND(io_apic->virtual_addr), reg);
 	mmio_out(IO_APIC_DAT(io_apic->virtual_addr), val);
@@ -193,7 +197,7 @@ void clear_irq_mask(uint32_t global_irq)
 	uint64_t reg = read_redirection_entry(io_apic, global_irq);
 
 	assert((IO_APIC_RTE_GET_VECTOR(reg) >= PLATFORM_INTERRUPT_BASE) &&
-		   (IO_APIC_RTE_VECTOR(reg) <= PLATFORM_MAX));
+		   (IO_APIC_RTE_GET_VECTOR(reg) <= PLATFORM_MAX));
 	reg &= ~IO_APIC_RTE_MASKED;
 
 	write_redirection_entry(io_apic, global_irq, reg);
@@ -511,7 +515,7 @@ void initialize_ioapic()
 		// Populate the rest of the descriptor
 		apic->virtual_addr = virtual_addr;
 
-		// lock::ScopedLock guard(io_apic_lock);
+		lock::ScopedLock guard(io_apic_lock);
 
 		uint32_t version = read_reg(apic, IO_APIC_REG_VER);
 		apic->version = IO_APIC_VER_VERSION(version);
@@ -538,6 +542,7 @@ void initialize_ioapic()
 		uint8_t isa_irq = isa_override[i].isa_irq;
 		assert(isa_irq < NUM_ISA_IRQS);
 		isa_overrides[isa_irq] = isa_override[i];
+		
 		log_debug("ISA IRQ override for ISA IRQ %u, mapping to %u", isa_irq,
 				  isa_overrides[i].global_irq);
 	}

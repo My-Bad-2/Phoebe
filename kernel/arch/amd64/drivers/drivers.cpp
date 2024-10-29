@@ -3,6 +3,10 @@
 
 #include <drivers/pit.hpp>
 #include <drivers/uart.hpp>
+#include <drivers/apic_timer.hpp>
+
+#include <cpu/features.h>
+#include <cpu/lapic.hpp>
 
 FILE* stdin = nullptr;
 FILE* stdout = nullptr;
@@ -29,22 +33,28 @@ void initialize_streams()
 
 void arch_initialize()
 {
-	static bool early_init = false;
+	uart::set_port(UART_COM_PORT_1);
 
-	if(!early_init)
+	if(uart::initialize() != SYSTEM_OK)
 	{
-		early_init = true;
-		uart::set_port(UART_COM_PORT_1);
+	}
 
-		if(uart::initialize() != SYSTEM_OK)
-		{
-		}
+	initialize_streams();
+}
 
-		initialize_streams();
+void late_initialize()
+{
+	bool use_tsc_deadline = test_feature(FEATURE_TSC_DEADLINE);
+
+	timers::initialize_pit();
+
+	if(use_tsc_deadline)
+	{
+		cpu::apic::initialize_timer_tsc_deadline();
 	}
 	else
 	{
-		timers::initialize_pit();
+		timers::calibrate_apic_timer();
 	}
 }
 } // namespace drivers

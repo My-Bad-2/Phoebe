@@ -1,3 +1,4 @@
 kernel_sources += files(
-    'pit.cpp'
+    'pit.cpp',
+    'apic.cpp'
 )

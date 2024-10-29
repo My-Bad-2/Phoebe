@@ -21,6 +21,7 @@ __NO_RETURN void kernel_main()
 	drivers::initialize();
 	
 	arch::late_initialize();
+	drivers::late_initialize();
 
 	log_info("Hello, World!");
 

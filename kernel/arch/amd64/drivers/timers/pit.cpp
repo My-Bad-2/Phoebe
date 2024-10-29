@@ -43,7 +43,7 @@ static uint16_t pit_divisor;
 
 inline void pit_tick()
 {
-	pit_ticks += 1;
+	pit_ticks++;
 }
 
 void set_pit_freq(uint32_t freq)
@@ -84,7 +84,7 @@ void set_pit_freq(uint32_t freq)
 	arch::outp<uint8_t>(CHANNEL0, static_cast<uint8_t>(pit_divisor >> 8));
 }
 
-inline void pit_calibration_precycle(uint16_t ms)
+void pit_calibration_precycle(uint16_t ms)
 {
 	const uint16_t init_pic_count = static_cast<uint16_t>(INTERNAL_FREQ_TICKS_PER_MS * ms);
 
@@ -92,7 +92,7 @@ inline void pit_calibration_precycle(uint16_t ms)
 	arch::outp<uint8_t>(CHANNEL0, static_cast<uint8_t>(init_pic_count));
 }
 
-inline void pit_calibration_cycle(uint16_t ms)
+void pit_calibration_cycle(uint16_t ms)
 {
 	const uint16_t init_pic_count = static_cast<uint16_t>(INTERNAL_FREQ_TICKS_PER_MS * ms);
 	arch::outp<uint8_t>(CHANNEL0, static_cast<uint8_t>(init_pic_count >> 8));
@@ -105,7 +105,7 @@ inline void pit_calibration_cycle(uint16_t ms)
 	} while((status & 0xc0) != 0x80);
 }
 
-inline void pit_calibration_cycle_cleanup()
+void pit_calibration_cycle_cleanup()
 {
 	arch::outp<uint8_t>(COMMAND_REGISTER, MODE4 | ACCESS_LO_HI_BYTE);
 }
@@ -123,8 +123,6 @@ void initialize_pit()
 		pit_tick();
 	});
 
-	drivers::interrupts::clear_interrupt_mask(vector);
-
 	log_end_intialization();
 }
 
@@ -141,6 +139,11 @@ void pit_sleep(uint32_t msec)
 size_t get_time()
 {
 	return pit_ticks;
+}
+
+void tick()
+{
+	pit_tick();
 }
 
 void sleep(size_t ms)

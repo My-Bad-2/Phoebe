@@ -9,6 +9,9 @@ namespace timers
 {
 size_t get_time();
 void sleep(size_t ms);
+
+void set_oneshot_timer(size_t deadline);
+void tick();
 } // namespace timers
 } // namespace drivers
 

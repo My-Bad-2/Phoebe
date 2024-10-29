@@ -1,6 +1,7 @@
 #include <logger.h>
-#include <drivers/acpi.hpp>
 #include <kernel.h>
+
+#include <drivers/acpi.hpp>
 
 #include <uacpi/uacpi.h>
 #include <uacpi/utilities.h>

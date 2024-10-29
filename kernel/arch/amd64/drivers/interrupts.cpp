@@ -1,3 +1,4 @@
+#include <cpu/lapic.hpp>
 #include <assert.h>
 
 #include <cpu/pic.hpp>
@@ -15,6 +16,8 @@ std::array<InterruptHandler, MAX_IDT_ENTRIES> handlers;
 
 std::pair<InterruptHandler&, int> allocate_handler(int vector)
 {
+	using namespace cpu::apic;
+
 	if(vector < PLATFORM_INTERRUPT_BASE)
 	{
 		vector += PLATFORM_INTERRUPT_BASE;
@@ -27,6 +30,13 @@ std::pair<InterruptHandler&, int> allocate_handler(int vector)
 		{
 			handlers[vector].reserved = true;
 			handlers[vector].vector = vector;
+
+			// Configure isa irqs for ioapic
+			if(io_apic_initialized())
+			{
+				configure_isa_irq(vector - PLATFORM_INTERRUPT_BASE, DELIVERY_MODE_FIXED, false,
+								  DST_MODE_PHYSICAL, 0, vector);
+			}
 
 			return {handlers[vector], vector};
 		}
@@ -59,7 +69,7 @@ void set_interrupt_mask(int vector)
 
 	if(acpi::legacy_pic() && apic::io_apic_initialized())
 	{
-		apic::set_irq_mask(vector - PLATFORM_INTERRUPT_BASE);
+		apic::set_irq_mask(vector);
 	}
 	else
 	{
@@ -74,7 +84,7 @@ void clear_interrupt_mask(int vector)
 
 	if(acpi::legacy_pic() && apic::io_apic_initialized())
 	{
-		apic::clear_irq_mask(vector - PLATFORM_INTERRUPT_BASE);
+		apic::clear_irq_mask(vector);
 	}
 	else
 	{
@@ -84,8 +94,16 @@ void clear_interrupt_mask(int vector)
 
 void issue_eoi(int vector)
 {
-	assert((vector >= PLATFORM_INTERRUPT_BASE) && (vector <= (PLATFORM_INTERRUPT_BASE + 16)));
-	cpu::interrupts::pic_send_eoi(vector - PLATFORM_INTERRUPT_BASE);
+	assert((vector >= PLATFORM_INTERRUPT_BASE));
+
+	if(cpu::apic::io_apic_initialized())
+	{
+		cpu::apic::issue_eoi();
+	}
+	else
+	{
+		cpu::interrupts::pic_send_eoi(vector - PLATFORM_INTERRUPT_BASE);
+	}
 }
 } // namespace interrupts
 } // namespace drivers

@@ -10,6 +10,10 @@ namespace timers
 {
 void initialize_pit();
 void pit_sleep(uint32_t __msec);
+
+void pit_calibration_precycle(uint16_t ms);
+void pit_calibration_cycle(uint16_t ms);
+void pit_calibration_cycle_cleanup();
 } // namespace timers
 } // namespace drivers
 

@@ -7,5 +7,6 @@ kernel_sources += files(
     'features.cpp',
     'pic.cpp',
     'fpu.cpp',
-    'ioapic.cpp'
+    'ioapic.cpp',
+    'lapic.cpp'
 )
