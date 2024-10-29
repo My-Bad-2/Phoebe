@@ -27,6 +27,13 @@ namespace cpu
 {
 namespace apic
 {
+enum TimerModes
+{
+	TIMER_ONESHOT = 0,
+	TIMER_PERIODIC,
+	TIMER_TSC_DEADLINE,
+};
+
 void initialize_lapic_virt();
 void initialize_lapic();
 
@@ -54,6 +61,8 @@ void pmi_mask();
 void pmi_unmask();
 
 bool is_x2apic_enabled();
+
+void set_timer(uint8_t vector, size_t ticks, TimerModes mode);
 } // namespace apic
 } // namespace cpu
 

@@ -412,5 +412,32 @@ void pmi_unmask()
 	reg_and(LAPIC_REG_LVT_PERF, ~LVT_MASKED);
 	enable_interrupts();
 }
+
+void set_timer(uint8_t vector, size_t ticks, TimerModes mode)
+{
+	size_t timer_config = read_reg(LAPIC_REG_LVT_TIMER);
+	timer_config &=
+		~(LVT_TIMER_MODE_ONESHOT | LVT_TIMER_MODE_TSC_DEADLINE | LVT_TIMER_MODE_PERIODIC);
+
+	switch(mode)
+	{
+		case TIMER_ONESHOT:
+			timer_config |= LVT_TIMER_MODE_ONESHOT;
+			break;
+		case TIMER_PERIODIC:
+			timer_config |= LVT_TIMER_MODE_PERIODIC;
+			break;
+		case TIMER_TSC_DEADLINE:
+			timer_config |= LVT_TIMER_MODE_TSC_DEADLINE;
+			break;
+	}
+
+	timer_config &= 0xffffff00;
+	timer_config |= LVT_VECTOR(vector);
+
+	write_reg(LAPIC_REG_LVT_TIMER, timer_config);
+	write_reg(LAPIC_REG_INIT_COUNT, ticks ? ticks : 1);
+	reg_and(LAPIC_REG_LVT_TIMER, ~LVT_MASKED);
+}
 } // namespace apic
 } // namespace cpu

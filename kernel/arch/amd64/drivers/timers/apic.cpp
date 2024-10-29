@@ -149,5 +149,18 @@ void stop_timer()
 		cpu::apic::timer_stop();
 	}
 }
+
+void apic_timer(uint8_t vector, size_t ms, cpu::apic::TimerModes mode)
+{
+	using namespace cpu;
+
+	if(apic_ticks_per_ms == 0)
+	{
+		calibrate_apic_timer();
+	}
+
+	size_t ticks = apic_ticks_per_ms * ms;
+	apic::set_timer(vector, ticks, mode);
+}
 } // namespace timers
 } // namespace drivers

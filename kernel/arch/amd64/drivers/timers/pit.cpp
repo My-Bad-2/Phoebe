@@ -43,7 +43,7 @@ static uint16_t pit_divisor;
 
 inline void pit_tick()
 {
-	pit_ticks++;
+	pit_ticks += 1;
 }
 
 void set_pit_freq(uint32_t freq)
