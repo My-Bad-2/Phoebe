@@ -5,13 +5,20 @@
 
 struct Stackframe
 {
-	struct Stackframe* next;
-	void* return_address;
+	struct Stackframe* next; ///< Pointer to the next stack frame in the chain.
+	void* return_address; ///< Return address of the current stack frame.
 };
 
+/**
+ * @brief Dumps the stack trace by traversing linked stack frames up to a defined maximum.
+ *
+ * The function reads the frame pointer to access the current stack frame and iterates through
+ * the stack, logging each frame's return address until the limit defined by `STACKTRACE_MAX`
+ * or a NULL frame is encountered.
+ */
 void dump_stacktrace(void)
 {
-	struct Stackframe* frame = (struct Stackframe*)(__GET_FRAME(0));
+	struct Stackframe* frame = (struct Stackframe*)(__GET_FRAME(0)); // Start with current frame
 	void* address = NULL;
 
 	int i = 0;
@@ -23,9 +30,9 @@ void dump_stacktrace(void)
 
 		if(address == NULL)
 		{
-			break;
+			break; // Stop if there is no return address
 		}
 
-		log_trace("Frame #%d -> %p", i, address);
+		log_trace("Frame #%d -> %p", i, address); // Log the frame index and address
 	}
 }
