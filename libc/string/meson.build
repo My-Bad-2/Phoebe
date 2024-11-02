@@ -1,5 +1,6 @@
 libc_sources += files(
     'memcmp.c',
+    'memcopy.c',
     'memcpy.c',
     'memmove.c',
     'memset.c',
@@ -7,5 +8,4 @@ libc_sources += files(
     'strcmp.c',
     'strcpy.c',
     'strlen.c',
-    'memcopy.c'
 )

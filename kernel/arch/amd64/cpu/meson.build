@@ -1,12 +1,12 @@
 kernel_sources += files(
     'cpu.cpp',
-    'gdt.cpp',
-    'gdt.S',
-    'idt.cpp',
-    'idt.S',
     'features.cpp',
-    'pic.cpp',
     'fpu.cpp',
+    'gdt.S',
+    'gdt.cpp',
+    'idt.S',
+    'idt.cpp',
     'ioapic.cpp',
-    'lapic.cpp'
+    'lapic.cpp',
+    'pic.cpp',
 )

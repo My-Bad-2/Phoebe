@@ -1,3 +1,1 @@
-kernel_sources += files(
-    'assert.c'
-)
+kernel_sources += files('assert.c')

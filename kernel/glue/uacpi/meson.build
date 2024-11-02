@@ -1,11 +1,11 @@
 kernel_sources += files(
+    'event.cpp',
     'interrupts.cpp',
     'io.cpp',
     'locks.cpp',
     'log.cpp',
     'memory.cpp',
-    'timer.cpp',
-    'event.cpp',
+    'rsdp.cpp',
     'schedule.cpp',
-    'rsdp.cpp'
+    'timer.cpp',
 )

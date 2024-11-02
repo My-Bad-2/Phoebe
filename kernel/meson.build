@@ -1,15 +1,13 @@
-kernel_include = [
-    include_directories('include')
-]
+kernel_include = [include_directories('include')]
 
 if get_option('kernel_arch') == 'amd64'
     kernel_include += include_directories('include/arch/amd64')
 endif
 
 kernel_sources = files(
-    'main.cpp',
+    'limine.c',
     'logger.cpp',
-    'limine.c'
+    'main.cpp',
 )
 
 subdir('drivers')

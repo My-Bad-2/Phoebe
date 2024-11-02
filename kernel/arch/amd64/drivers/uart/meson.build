@@ -1,3 +1,3 @@
 kernel_sources += files(
-    'uart.cpp'
+    'uart.cpp',
 )

@@ -1,3 +1,1 @@
-kernel_sources += files(
-    'paging.cpp'
-)
+kernel_sources += files('paging.cpp')

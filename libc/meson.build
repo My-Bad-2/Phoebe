@@ -1,10 +1,6 @@
-libc_include = [
-    include_directories('include')
-]
+libc_include = [include_directories('include')]
 
-libc_sources = files(
-    'ctype.c'
-)
+libc_sources = files('ctype.c')
 
 subdir('stdio')
 subdir('string')

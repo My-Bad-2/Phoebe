@@ -1,5 +1,5 @@
 kernel_sources += files(
-    'hashtable.cpp',
+    'hash.cpp',
     'hashtable-aux.cpp',
-    'hash.cpp'
+    'hashtable.cpp',
 )
