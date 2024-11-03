@@ -159,8 +159,15 @@ extern "C"
 		issue_eoi(iframe->vector);
 	}
 
-	void nmi_handler(Iframe* iframe)
+	void nmi_handler(Nmiframe* iframe)
 	{
+		uintptr_t gs = cpu::read_msr(MSR_GS_BASE);
+		cpu::write_msr(MSR_GS_BASE, reinterpret_cast<uintptr_t>(iframe->expected_gs));
+
+		log_panic("gs_base = %lu", gs);
 		log_panik("nmi_handler()  called!");
+
+		// Restore previous gs state
+		cpu::write_msr(MSR_GS_BASE, gs);
 	}
 }

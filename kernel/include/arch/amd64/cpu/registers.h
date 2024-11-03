@@ -295,6 +295,12 @@ struct Iframe
 	unsigned long ip, cs, flags;
 	unsigned long user_sp, user_ss;
 };
+
+struct Nmiframe
+{
+	Iframe regs;
+	void* expected_gs;
+};
 #endif
 
 #endif // CPU_REGISTERS_H
