@@ -9,4 +9,5 @@ kernel_sources += files(
     'ioapic.cpp',
     'lapic.cpp',
     'pic.cpp',
+    'smp.cpp',
 )

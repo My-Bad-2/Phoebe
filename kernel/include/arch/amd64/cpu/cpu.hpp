@@ -263,6 +263,10 @@ inline void set_kernel_gs_base(uintptr_t addr)
 	write_msr(MSR_KERNEL_GS_BASE, addr);
 }
 
+inline void swapgs() {
+	asm volatile("swapgs");
+}
+
 void initialize();
 void late_initialize();
 } // namespace cpu

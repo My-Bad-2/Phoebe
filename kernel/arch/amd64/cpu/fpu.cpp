@@ -199,8 +199,6 @@ void initialize()
 
 	log_begin_intialization("Streaming SIMD Extensions");
 
-	initialize_sse();
-
 	log_end_intialization();
 }
 

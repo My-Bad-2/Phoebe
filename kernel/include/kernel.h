@@ -12,6 +12,7 @@ extern volatile struct limine_kernel_address_request kernel_address_request;
 extern volatile struct limine_kernel_file_request kernel_file_request;
 extern volatile struct limine_paging_mode_request paging_mode_request;
 extern volatile struct limine_rsdp_request rsdp_request;
+extern volatile struct limine_smp_request smp_request;
 
 bool is_paging_mode_max(void);
 __CDECLS_END

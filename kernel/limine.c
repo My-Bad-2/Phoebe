@@ -1,3 +1,4 @@
+#include "limine.h"
 #include <kernel.h>
 #include <stddef.h>
 
@@ -57,6 +58,16 @@ volatile struct limine_rsdp_request rsdp_request = {
 	.id = LIMINE_RSDP_REQUEST,
 	.revision = 0,
 	.response = NULL,
+};
+
+__SECTION(".limine_requests")
+volatile struct limine_smp_request smp_request = {
+	.id = LIMINE_SMP_REQUEST,
+	.revision = 0,
+	.response = NULL,
+#ifdef __x86_64__
+	.flags = LIMINE_SMP_X2APIC,
+#endif
 };
 
 __SECTION(".limine_requests_end_marker") __USED static volatile LIMINE_REQUESTS_END_MARKER;

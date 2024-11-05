@@ -103,6 +103,7 @@ struct IdtRegister
 } __PACKED;
 
 error_t initialize();
+error_t initialize(IdtTable* table);
 } // namespace interrupts
 } // namespace cpu
 

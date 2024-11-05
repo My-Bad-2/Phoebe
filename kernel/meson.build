@@ -10,6 +10,7 @@ kernel_sources = files(
     'main.cpp',
 )
 
+subdir('cpu')
 subdir('drivers')
 subdir('arch' / get_option('kernel_arch'))
 subdir('glue')

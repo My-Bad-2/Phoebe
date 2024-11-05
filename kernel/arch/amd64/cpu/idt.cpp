@@ -23,6 +23,8 @@ namespace interrupts
 {
 IdtTable* idt_table = nullptr;
 
+bool already_intialized = false;
+
 inline uint8_t idt_attribute(uint8_t type, uint8_t dpl)
 {
 	uint8_t ret = TYPE_ATTRIBUTE_PRESENT;
@@ -129,6 +131,52 @@ error_t initialize()
 	IdtRegister idtr = {
 		sizeof(IdtTable) - 1,
 		reinterpret_cast<uint64_t>(idt_table),
+	};
+
+	load_idt(&idtr);
+
+	pic_initialize(PLATFORM_INTERRUPT_BASE, PLATFORM_INTERRUPT_BASE + 8);
+
+	log_end_intialization();
+
+	return SYSTEM_OK;
+}
+
+error_t initialize(IdtTable* table)
+{
+	uint8_t type = IDT_INTERRUPT_GATE;
+	uint8_t dpl = IDT_DPL0;
+
+	log_begin_intialization("Interrupt Descriptor Table");
+
+	for(int vector = 0; vector < MAX_IDT_ENTRIES; vector++)
+	{
+		switch(vector)
+		{
+			case EXCEPTION_BREAKPOINT:
+				dpl = IDT_DPL3;
+			default:
+				dpl = IDT_DPL0;
+		}
+
+		table->entries[vector].create_entry(isr_table[vector], 0, type, dpl,
+												KERNEL_CODE_SELECTOR);
+	}
+	
+	for(int vector = 0; (vector < PLATFORM_INTERRUPT_BASE) && !already_intialized; vector++)
+	{
+		using namespace drivers::interrupts;
+
+		InterruptHandler& handler = get_handler(vector);
+		handler.set(exception_handler);
+		handler.vector = vector;
+	}
+
+	already_intialized = true;
+
+	IdtRegister idtr = {
+		sizeof(IdtTable) - 1,
+		reinterpret_cast<uint64_t>(table),
 	};
 
 	load_idt(&idtr);

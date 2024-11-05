@@ -9,6 +9,8 @@ namespace cpu
 namespace fpu
 {
 void initialize();
+void initialize_sse();
+
 void* allocate_fpu_buffer();
 void free_fpu_buffer(void* __buffer);
 

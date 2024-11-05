@@ -117,9 +117,9 @@ void intialize_apic_error()
 	write_reg(LAPIC_REG_LVT_ERROR, LVT_VECTOR(INTERRUPT_APIC_ERROR));
 	write_reg(LAPIC_REG_ERROR_STATUS, 0);
 
-	auto [handler, vector] = drivers::interrupts::allocate_handler(INTERRUPT_APIC_ERROR);
-
-	assert(vector == INTERRUPT_APIC_ERROR);
+	auto& handler = drivers::interrupts::get_handler(INTERRUPT_APIC_ERROR);
+	handler.reserved = true;
+	handler.vector = INTERRUPT_APIC_ERROR;
 
 	handler.set([](Iframe*) {
 		write_reg(LAPIC_REG_ERROR_STATUS, 0);
@@ -132,9 +132,9 @@ void initialize_apic_pmi()
 {
 	write_reg(LAPIC_REG_LVT_PERF, LVT_VECTOR(INTERRUPT_APIC_PMI) | LVT_MASKED);
 
-	auto [handler, vector] = drivers::interrupts::allocate_handler(INTERRUPT_APIC_PMI);
-
-	assert(vector == INTERRUPT_APIC_PMI);
+	auto& handler = drivers::interrupts::get_handler(INTERRUPT_APIC_PMI);
+	handler.reserved = true;
+	handler.vector = INTERRUPT_APIC_PMI;
 
 	handler.set([](Iframe*) {
 		log_error("Implement APIC PMI handler!");
@@ -159,9 +159,9 @@ void initialize_apic_timer()
 		initialize_timer_tsc_deadline();
 	}
 
-	auto [handler, vector] = drivers::interrupts::allocate_handler(INTERRUPT_APIC_TIMER);
-
-	assert(vector == INTERRUPT_APIC_TIMER);
+	auto& handler = drivers::interrupts::get_handler(INTERRUPT_APIC_TIMER);
+	handler.reserved = true;
+	handler.vector = INTERRUPT_APIC_TIMER;
 
 	handler.set([](Iframe*) {
 		drivers::timers::tick();

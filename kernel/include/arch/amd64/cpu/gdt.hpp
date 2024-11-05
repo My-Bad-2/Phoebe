@@ -87,6 +87,20 @@ struct Tss
 	uint64_t reserved2; /**< Reserved field. */
 	uint16_t reserved3; /**< Reserved field. */
 	uint16_t iopb_offset; /**< Offset to the I/O Permission Bitmap. */
+	std::array<uint8_t, 8192> iop_bitmap;
+	uint8_t reserved4;
+
+	void initialize()
+	{
+		this->iopb_offset = offsetof(Tss, iop_bitmap);
+
+		for(int i = 0; i < 8192; ++i)
+		{
+			this->iop_bitmap[i] = 0xff;
+		}
+
+		this->reserved4 = 0xff;
+	}
 } __PACKED;
 
 /**
@@ -122,6 +136,7 @@ struct GdtRegister
 } __PACKED;
 
 error_t initialize();
+error_t initialize(GdtTable* table, Tss* tss);
 } // namespace gdt
 } // namespace cpu
 

@@ -34,7 +34,7 @@ namespace cpu
 namespace gdt
 {
 GdtTable gdt_table = {};
-Tss tss = {};
+Tss global_tss = {};
 lock::mutex lock = {};
 
 void GdtSegment::create_entry(uint32_t base, uint32_t limit, uint8_t granularity, uint8_t access)
@@ -76,11 +76,39 @@ error_t initialize()
 	gdt_table[GDT_USER_CODE].create_entry(GDT_LONG_MODE_GRANULARITY | GDT_GRANULARITY,
 										  GDT_CODE_SEGMENT | GDT_USER);
 
-	gdt_table.tss.create_entry(&tss);
+	gdt_table.tss.create_entry(&global_tss);
 
 	GdtRegister gdtr = {
 		sizeof(GdtTable) - 1,
 		reinterpret_cast<uintptr_t>(&gdt_table),
+	};
+
+	load_gdt(&gdtr);
+	load_tss();
+
+	log_end_intialization();
+
+	return SYSTEM_OK;
+}
+
+error_t initialize(GdtTable* table, Tss* tss) {
+	lock::ScopedLock guard(lock);
+
+	log_begin_intialization("Global Descriptor Table");
+
+	table->table[0].create_entry(0, 0, 0, 0);
+	table->table[GDT_KERNEL_CODE].create_entry(GDT_LONG_MODE_GRANULARITY | GDT_GRANULARITY,
+											GDT_CODE_SEGMENT);
+	table->table[GDT_KERNEL_DATA].create_entry(GDT_DB | GDT_GRANULARITY, GDT_DATA_SEGMENT);
+	table->table[GDT_USER_DATA].create_entry(GDT_DB | GDT_GRANULARITY, GDT_DATA_SEGMENT | GDT_USER);
+	table->table[GDT_USER_CODE].create_entry(GDT_LONG_MODE_GRANULARITY | GDT_GRANULARITY,
+										  GDT_CODE_SEGMENT | GDT_USER);
+
+	table->tss.create_entry(tss);
+
+	GdtRegister gdtr = {
+		sizeof(GdtTable) - 1,
+		reinterpret_cast<uintptr_t>(table),
 	};
 
 	load_gdt(&gdtr);
