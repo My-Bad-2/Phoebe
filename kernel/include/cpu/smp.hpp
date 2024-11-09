@@ -8,8 +8,12 @@ namespace cpu
 {
 namespace smp
 {
+struct PlatformCpuData;
+
 void initialize_bsp();
 void initialize();
+
+PlatformCpuData* get_cpu_data();
 } // namespace smp
 } // namespace cpu
 

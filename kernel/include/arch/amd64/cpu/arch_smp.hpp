@@ -28,13 +28,8 @@ struct PlatformCpuData
 	interrupts::IdtTable* idt;
 	gdt::Tss* tss;
 
-	void* irq_stack;
-	void* nmi_stack;
-
 	bool is_up;
 };
-
-PlatformCpuData* get_cpu_data();
 
 void initialize_base_cpu(limine_smp_info* cpu);
 void initialize_cpu(limine_smp_info* cpu);

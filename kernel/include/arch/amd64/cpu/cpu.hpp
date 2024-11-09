@@ -1,6 +1,8 @@
 #ifndef CPU_CPU_HPP
 #define CPU_CPU_HPP 1
 
+#include <assert.h>
+#include <cpu/features.h>
 #include <stdint.h>
 #include <cpu/registers.h>
 
@@ -21,6 +23,12 @@
 
 namespace cpu
 {
+struct InvpcidDescriptor
+{
+	uint64_t pcid;
+	uint64_t address;
+};
+
 /**
  * @brief Invalidates a specific page in the TLB (Translation Lookaside Buffer).
  *
@@ -263,8 +271,112 @@ inline void set_kernel_gs_base(uintptr_t addr)
 	write_msr(MSR_KERNEL_GS_BASE, addr);
 }
 
-inline void swapgs() {
+inline void swapgs()
+{
 	asm volatile("swapgs");
+}
+
+inline void invpcid(InvpcidDescriptor desc, uint64_t mode)
+{
+	asm volatile("invpcid %0, %1" ::"m"(desc), "r"(mode));
+}
+
+inline void invpcid_va_pcid(uintptr_t addr, uint16_t pcid)
+{
+	// Mode 0 of INVPCID takes both the virtual address + pcid and locally shoots
+	// down non global pages with it on the current cpu.
+	uint64_t mode = 0;
+
+	InvpcidDescriptor desc = {
+		.pcid = pcid,
+		.address = addr,
+	};
+
+	invpcid(desc, mode);
+}
+
+inline void invpcid_pcid_all(uint16_t pcid)
+{
+	// Mode 1 of INVPCID takes only the pcid and locally shoots down all
+	// non-global pages tagged with it on the current cpu.
+	uint64_t mode = 1;
+
+	InvpcidDescriptor desc = {
+		.pcid = pcid,
+		.address = 0,
+	};
+
+	invpcid(desc, mode);
+}
+
+static void invpcid_all_including_global()
+{
+	// Mode 2 of INVPCID shoots down all tlb entries in all pcids including global pages
+	// on the current cpu.
+	uint64_t mode = 2;
+	InvpcidDescriptor desc = {
+		.pcid = 0,
+		.address = 0,
+	};
+
+	invpcid(desc, mode);
+}
+
+inline void invpcid_all_excluding_global()
+{
+	// Mode 3 of INVPCID shoots down all tlb entries in all pcids excluding global pages
+	// on the current cpu.
+	uint64_t mode = 3;
+
+	InvpcidDescriptor desc = {
+		.pcid = 0,
+		.address = 0,
+	};
+
+	invpcid(desc, mode);
+}
+
+inline void x86_tlb_nonglobal_invalidate(uint16_t pcid)
+{
+	if(test_feature(FEATURE_INVPCID))
+	{
+		// If using PCID, make sure we invalidate all entries in all PCIDs.
+		// If just using INVPCID, take advantage of the fancier instruction.
+		if(pcid != 0)
+		{
+			invpcid_pcid_all(pcid);
+		}
+		else
+		{
+			invpcid_all_excluding_global();
+		}
+	}
+	else
+	{
+		// Read CR3 and immediately write it back.
+		write_cr3(read_cr3());
+	}
+}
+
+inline void x86_tlb_global_invalidate()
+{
+	if(test_feature(FEATURE_INVPCID))
+	{
+		// If using PCID, make sure we invalidate all entries in all PCIDs.
+		// If just using INVPCID, take advantage of the fancier instruction.
+		invpcid_all_including_global();
+	}
+	else
+	{
+		// See Intel 3A section 4.10.4.1
+		uint64_t cr4 = read_cr4();
+		
+		// Global pages *must* be enabled.
+		assert(cr4 & CR4_PGE);
+
+		write_cr4(cr4 & ~CR4_PGE);
+		write_cr4(cr4 | CR4_PGE);
+	}
 }
 
 void initialize();

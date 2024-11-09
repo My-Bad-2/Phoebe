@@ -3,10 +3,18 @@
 
 #include <stddef.h>
 
+#define NS_PER_MS (1000000)
+
 namespace drivers
 {
 namespace timers
 {
+enum class TimerMode
+{
+	TIMER_PERIODIC,
+	TIMER_ONESHOT,
+};
+
 size_t get_time();
 void sleep(size_t ms);
 
